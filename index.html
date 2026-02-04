@@ -128,9 +128,12 @@
           <option value="Discover">Discover</option>
           <option value="Costco">Costco</option>
           <option value="Verizon">Verizon</option>
-        </select>
+          <option value="Other">Other (Uncategorized)</option> </select>
         <button onclick="fetchHistory()" style="padding: 0.5rem 1rem; background: #1a73e8; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">View</button>
       </div>
+  
+      <div id="historyTotal" style="margin-bottom: 10px; font-weight: bold; color: #1a73e8; font-size: 0.9rem;"></div>
+  
       <div id="historyList" style="font-size: 0.85rem; max-height: 300px; overflow-y: auto; border: 1px solid #f0f2f5; border-radius: 8px;"></div>
     </div>
   </div>
@@ -247,21 +250,35 @@
 
     async function fetchHistory() {
       const card = document.getElementById('cardFilter').value;
+      const historyTotal = document.getElementById('historyTotal'); // New element
       if (!CONFIG.WEB_APP_URL) return;
+  
       elements.historyList.innerHTML = "<p style='padding:10px'>⌛ Loading...</p>";
+      historyTotal.innerHTML = ""; // Clear total while loading
+  
       try {
         const res = await fetch(`${CONFIG.WEB_APP_URL}?card=${card}`);
         const data = await res.json();
+    
         if (data.entries && data.entries.length > 0) {
+          // Calculate the sum of all visible entries
+          const total = data.entries.reduce((sum, entry) => sum + parseFloat(entry.price), 0);
+          historyTotal.innerHTML = `Total Uncleared: $${total.toFixed(2)}`;
+
           elements.historyList.innerHTML = data.entries.map(e => `
             <div class="history-item">
               <span><strong>${e.where}</strong> ($${parseFloat(e.price).toFixed(2)})<br><small>${e.when}</small></span>
               <button onclick="reconcileItem(${e.index})" style="background:#e6f4ea; border:none; padding:10px; border-radius:50%; cursor:pointer; font-size:1.2rem;">✅</button>
             </div>
           `).join('');
-        } else { elements.historyList.innerHTML = "<p style='padding:10px'>No entries found.</p>"; }
-      } catch (e) { elements.historyList.innerHTML = "<p style='padding:10px'>Error loading history.</p>"; }
+      } else {
+        elements.historyList.innerHTML = "<p style='padding:10px'>No entries found.</p>";
+        historyTotal.innerHTML = "Total Uncleared: $0.00";
+      }
+    } catch (e) { 
+      elements.historyList.innerHTML = "<p style='padding:10px'>Error loading history.</p>"; 
     }
+}
 
     async function reconcileItem(index) {
       if (!confirm("Reconcile (delete) this item?")) return;
@@ -275,4 +292,5 @@
 </body>
 
 </html>
+
 
