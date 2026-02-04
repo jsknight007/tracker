@@ -2,40 +2,118 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Expense Tracker</title>
   <link rel="manifest" href="manifest.json">
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 1.5rem; background: #f0f2f5; }
-    .container { background: white; padding: 2rem; border-radius: 16px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05); }
-    h1 { margin-bottom: 1.5rem; color: #1a73e8; font-size: 1.5rem; text-align: center; }
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     
-    .config-section { background: #fff9c4; border: 1px solid #fbc02d; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; }
-    .config-section input { width: 100%; padding: 0.6rem; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 0.5rem; }
-    .config-section button { width: 100%; padding: 0.5rem; background: #fbc02d; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+      max-width: 600px; 
+      margin: 0 auto; 
+      padding: 1rem; 
+      background: #f0f2f5; 
+      color: #1c1e21;
+    }
+
+    .container { 
+      background: white; 
+      padding: 1.25rem; 
+      border-radius: 20px; 
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05); 
+      width: 100%;
+      overflow: hidden;
+    }
+
+    h1 { margin-bottom: 1.25rem; color: #1a73e8; font-size: 1.4rem; text-align: center; font-weight: 800; }
     
-    .input-tabs { display: flex; gap: 10px; margin-bottom: 1rem; }
-    .tab-button { flex: 1; padding: 0.8rem; background: #e4e6eb; border: none; border-radius: 10px; cursor: pointer; font-weight: 600; }
-    .tab-button.active { background: #1a73e8; color: white; }
+    .config-section { background: #fff9c4; border: 1px solid #fbc02d; padding: 1rem; border-radius: 12px; margin-bottom: 1.5rem; }
+    .config-section input { width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 0.5rem; font-size: 0.9rem; }
+    .config-section button { width: 100%; padding: 0.75rem; background: #fbc02d; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: opacity 0.2s; }
+
+    .input-tabs { display: flex; gap: 8px; margin-bottom: 1.25rem; background: #f0f2f5; padding: 4px; border-radius: 12px; }
+    .tab-button { flex: 1; padding: 0.75rem; border: none; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 0.9rem; transition: all 0.2s; color: #65676b; background: transparent; }
+    .tab-button.active { background: white; color: #1a73e8; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    
     .tab-content { display: none; }
-    .tab-content.active { display: block; }
+    .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-    #mic { width: 100%; padding: 2.5rem; font-size: 1.2rem; border: none; background: #34a853; color: white; border-radius: 12px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 12px; }
-    #mic.listening { background: #ea4335; animation: pulse 1.5s infinite; }
-    @keyframes pulse { 0% { transform: scale(1); } 70% { transform: scale(0.98); } 100% { transform: scale(1); } }
-
-    .manual-input-container { display: flex; gap: 0.5rem; }
-    #manualInput { flex: 1; padding: 1rem; border: 2px solid #e4e6eb; border-radius: 10px; font-size: 1rem; outline: none; }
-    #submitBtn { padding: 0 1.2rem; background: #1a73e8; color: white; border: none; border-radius: 10px; cursor: pointer; font-size: 1.2rem; }
-    .example-chip { padding: 0.5rem 0.9rem; background: #e8f0fe; border: 1px solid #d2e3fc; border-radius: 20px; font-size: 0.85rem; color: #1967d2; cursor: pointer; margin: 4px; display: inline-block; }
+    /* FLEXBOX FIX FOR BUTTON PUSHING OFF-SCREEN */
+    .manual-input-container { display: flex; gap: 0.6rem; width: 100%; align-items: center; }
+    #manualInput { 
+      flex: 1; 
+      min-width: 0; /* Essential fix for mobile flex squeeze */
+      padding: 1rem; 
+      border: 2px solid #e4e6eb; 
+      border-radius: 12px; 
+      font-size: 1rem; 
+      outline: none; 
+      transition: border-color 0.2s;
+    }
+    #manualInput:focus { border-color: #1a73e8; }
     
-    .transcript-container { margin-top: 1.5rem; padding: 1rem; background: #f8f9fa; border-left: 5px solid #1a73e8; min-height: 60px; border-radius: 8px; font-style: italic; }
-    #status { margin-top: 1rem; padding: 0.8rem; border-radius: 8px; display: none; text-align: center; font-weight: 500; }
+    #submitBtn { 
+      width: 54px; 
+      height: 54px; 
+      background: #1a73e8; 
+      color: white; 
+      border: none; 
+      border-radius: 12px; 
+      cursor: pointer; 
+      font-size: 1.4rem; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center;
+      flex-shrink: 0; /* Prevents button from being squashed */
+    }
+    #submitBtn:active { transform: scale(0.92); background: #1557b0; }
+
+    .example-chip { 
+      padding: 0.5rem 0.8rem; 
+      background: #e8f0fe; 
+      border: 1px solid #d2e3fc; 
+      border-radius: 12px; 
+      font-size: 0.8rem; 
+      color: #1967d2; 
+      cursor: pointer; 
+      margin: 4px 2px; 
+      display: inline-block;
+      transition: all 0.1s;
+    }
+    .example-chip:active { background: #d2e3fc; transform: translateY(1px); }
+
+    #mic { 
+      width: 100%; 
+      padding: 2.5rem; 
+      font-size: 1.2rem; 
+      border: none; 
+      background: #34a853; 
+      color: white; 
+      border-radius: 16px; 
+      cursor: pointer; 
+      display: flex; 
+      flex-direction: column; 
+      align-items: center; 
+      gap: 12px; 
+      box-shadow: 0 4px 12px rgba(52, 168, 83, 0.3);
+    }
+    #mic.listening { background: #ea4335; animation: pulse 1.5s infinite; }
+    @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(0.97); } 100% { transform: scale(1); } }
+
+    .transcript-container { margin-top: 1.5rem; padding: 1rem; background: #f8f9fa; border-left: 4px solid #1a73e8; min-height: 50px; border-radius: 8px; font-style: italic; font-size: 0.9rem; }
+    #status { margin-top: 1rem; padding: 0.8rem; border-radius: 10px; display: none; text-align: center; font-weight: 600; font-size: 0.9rem; }
     .success { background: #e6f4ea; color: #137333; display: block !important; }
     .error { background: #fce8e6; color: #c5221f; display: block !important; }
     .sending { background: #e8f0fe; color: #1967d2; display: block !important; }
-    .history-item { padding: 12px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+
+    .history-card { margin-top: 1.5rem; border-top: 1px solid #eee; padding-top: 1.5rem; }
+    .history-item { padding: 12px 0; border-bottom: 1px solid #f0f2f5; display: flex; justify-content: space-between; align-items: center; }
+    .history-details { display: flex; flex-direction: column; }
+    .history-price { font-weight: 700; color: #1c1e21; }
+    
+    .btn-delete { width: 100%; margin-top: 12px; padding: 0.8rem; background: #fff5f5; color: #c5221f; border: 1px solid #ffdada; border-radius: 12px; font-size: 0.85rem; cursor: pointer; font-weight: 600; }
   </style>
 </head>
 <body>
@@ -43,7 +121,7 @@
   <div class="container">
     <h1>💳 Expense Tracker</h1>
 
-    <div class="config-section">
+    <div class="config-section" id="configPanel">
       <input type="text" id="urlInput" placeholder="Google Script URL">
       <button onclick="updateURL()">Save URL</button>
     </div>
@@ -55,15 +133,15 @@
 
     <div id="manualTab" class="tab-content active">
       <div class="manual-input-container">
-        <input type="text" id="manualInput" placeholder="Store Price Card Date">
+        <input type="text" id="manualInput" placeholder="Store Price Card Date" spellcheck="false" autocomplete="off">
         <button id="submitBtn">📤</button>
       </div>
-      <div style="margin-top: 1rem;">
+      <div style="margin-top: 1rem; text-align: center;">
         <div class="example-chip" onclick="fill('Citi')">Citi</div>
         <div class="example-chip" onclick="fill('Discover')">Discover</div>
         <div class="example-chip" onclick="fill('GreenState')">GreenState</div>
         <div class="example-chip" onclick="fill('Costco')">Costco</div>
-        <div class="example-chip" onclick="fill('Other')">Other</div>
+        <div class="example-chip" onclick="fill('Yesterday')">Yesterday</div>
       </div>
     </div>
 
@@ -74,30 +152,30 @@
       </button>
     </div>
 
-    <div class="transcript-container" id="transcript">Waiting for input...</div>
+    <div class="transcript-container" id="transcript">Ready for your entry...</div>
     <div id="status"></div>
 
-    <button onclick="deleteLast()" style="width:100%; margin-top:10px; padding:0.6rem; background:#fee; color:#c5221f; border:1px solid #fadad7; border-radius:8px; font-size:0.8rem; cursor:pointer; font-weight:600;">
+    <button onclick="deleteLast()" class="btn-delete">
       Oops! Delete Last Entry
     </button>
 
-    <hr style="margin: 2rem 0; border: 0; border-top: 1px solid #ddd;">
-
-    <h3>Reconcile</h3>
-    <div style="display: flex; gap: 8px; margin-top: 0.5rem; margin-bottom: 1rem;">
-      <select id="cardFilter" style="flex: 1; padding: 0.6rem; border-radius: 8px; border: 1px solid #ddd;">
-        <option value="Citi">Citi</option>
-        <option value="GreenState">GreenState</option>
-        <option value="Discover">Discover</option>
-        <option value="Costco">Costco</option>
-        <option value="Verizon">Verizon</option>
-        <option value="Other">Other</option>
-      </select>
-      <button onclick="fetchHistory()" style="padding: 0.5rem 1rem; background: #1a73e8; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">View</button>
+    <div class="history-card">
+      <h3 style="font-size: 1rem; margin-bottom: 0.8rem;">Reconcile Records</h3>
+      <div style="display: flex; gap: 8px; margin-bottom: 1rem;">
+        <select id="cardFilter" style="flex: 1; padding: 0.75rem; border-radius: 10px; border: 1px solid #e4e6eb; background: white; font-size: 0.9rem;">
+          <option value="Citi">Citi</option>
+          <option value="GreenState">GreenState</option>
+          <option value="Discover">Discover</option>
+          <option value="Costco">Costco</option>
+          <option value="Verizon">Verizon</option>
+          <option value="Other">Other</option>
+        </select>
+        <button onclick="fetchHistory()" style="padding: 0.75rem 1.25rem; background: #1a73e8; color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: 600;">View</button>
+      </div>
+      <div id="historyList" style="font-size: 0.85rem; max-height: 300px; overflow-y: auto;"></div>
     </div>
-    <div id="historyList" style="font-size: 0.85rem; max-height: 250px; overflow-y: auto; border: 1px solid #f0f2f5; border-radius: 8px;"></div>
 
-    <div style="text-align: center; margin-top: 2rem; font-size: 0.7rem; color: #bdc3c7;">v1.2.0</div>
+    <div style="text-align: center; margin-top: 2rem; font-size: 0.65rem; color: #bdc3c7; letter-spacing: 1px;">V1.3.0 • PRECISION ENGINE</div>
   </div>
 
   <script>
@@ -110,10 +188,14 @@
       transcript: document.getElementById("transcript"),
       status: document.getElementById("status"),
       urlInput: document.getElementById("urlInput"),
-      historyList: document.getElementById("historyList")
+      historyList: document.getElementById("historyList"),
+      configPanel: document.getElementById("configPanel")
     };
 
-    if (CONFIG.WEB_APP_URL) elements.urlInput.value = CONFIG.WEB_APP_URL;
+    if (CONFIG.WEB_APP_URL) {
+      elements.urlInput.value = CONFIG.WEB_APP_URL;
+      elements.configPanel.style.display = "none"; // Hide config if URL exists
+    }
 
     function switchTab(tab) {
       document.getElementById('voiceTab').classList.toggle('active', tab === 'voice');
@@ -122,14 +204,20 @@
       document.getElementById('manualTabBtn').classList.toggle('active', tab === 'manual');
     }
 
-    function fill(val) { elements.manualInput.value += " " + val; elements.manualInput.focus(); }
+    function fill(val) { 
+      elements.manualInput.value += (elements.manualInput.value ? " " : "") + val; 
+      elements.manualInput.focus(); 
+    }
 
     function updateURL() {
       const url = elements.urlInput.value.trim();
       if (url.includes('script.google.com')) {
         CONFIG.WEB_APP_URL = url;
         localStorage.setItem('WEB_APP_URL', url);
-        showStatus("✅ Saved", "success");
+        showStatus("✅ Configuration Saved", "success");
+        setTimeout(() => elements.configPanel.style.display = "none", 1500);
+      } else {
+        showStatus("❌ Invalid Script URL", "error");
       }
     }
 
@@ -140,62 +228,87 @@
     }
 
     async function submitExpense(command) {
-      if (!CONFIG.WEB_APP_URL) return showStatus("⚠️ URL missing", "error");
-      showStatus("📤 Logging...", "sending");
+      if (!CONFIG.WEB_APP_URL) return showStatus("⚠️ Set URL first", "error");
+      showStatus("📤 Sending...", "sending");
       try {
         await fetch(CONFIG.WEB_APP_URL, {
           method: "POST", mode: "no-cors",
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
           body: new URLSearchParams({ 'command': command })
         });
-        showStatus("✅ Saved!", "success");
+        showStatus("✅ Saved to Sheet", "success");
         elements.manualInput.value = "";
-      } catch (err) { showStatus("❌ Error", "error"); }
+      } catch (err) { showStatus("❌ Network Error", "error"); }
     }
 
-    // ENTER KEY
     elements.manualInput.addEventListener("keypress", (e) => {
       if (e.key === "Enter") { e.preventDefault(); elements.submitBtn.click(); }
     });
 
     elements.submitBtn.onclick = () => {
       const val = elements.manualInput.value.trim();
-      if (val) { elements.transcript.textContent = `"${val}"`; submitExpense(val); }
+      if (val) { 
+        elements.transcript.textContent = `"${val}"`; 
+        submitExpense(val); 
+      }
     };
 
-    // Voice
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (SpeechRecognition) {
       const recognition = new SpeechRecognition();
-      elements.mic.onclick = () => { recognition.start(); elements.mic.classList.add('listening'); elements.micText.textContent = "Listening..."; };
-      recognition.onresult = (e) => { const text = e.results[0][0].transcript; elements.transcript.textContent = `"${text}"`; submitExpense(text); };
-      recognition.onend = () => { elements.mic.classList.remove('listening'); elements.micText.textContent = "Tap to Speak"; };
+      elements.mic.onclick = () => { 
+        recognition.start(); 
+        elements.mic.classList.add('listening'); 
+        elements.micText.textContent = "Listening..."; 
+      };
+      recognition.onresult = (e) => { 
+        const text = e.results[0][0].transcript; 
+        elements.transcript.textContent = `"${text}"`; 
+        submitExpense(text); 
+      };
+      recognition.onend = () => { 
+        elements.mic.classList.remove('listening'); 
+        elements.micText.textContent = "Tap to Speak"; 
+      };
     }
 
     async function deleteLast() {
-      if (!confirm("Delete last?")) return;
+      if (!confirm("Delete the most recent entry?")) return;
+      showStatus("🗑️ Deleting...", "sending");
       await fetch(`${CONFIG.WEB_APP_URL}?action=deleteLast`);
-      showStatus("🗑️ Deleted", "success");
-      fetchHistory();
+      showStatus("✅ Deleted", "success");
+      if (elements.historyList.innerHTML !== "") fetchHistory();
     }
 
     async function fetchHistory() {
       const card = document.getElementById('cardFilter').value;
-      elements.historyList.innerHTML = "<p style='padding:10px'>Loading...</p>";
-      const res = await fetch(`${CONFIG.WEB_APP_URL}?card=${card}`);
-      const data = await res.json();
-      if (data.entries && data.entries.length > 0) {
-        elements.historyList.innerHTML = data.entries.map(e => `
-          <div class="history-item">
-            <span><strong>${e.where}</strong> ($${parseFloat(e.price).toFixed(2)})<br><small>${e.when}</small></span>
-            <button onclick="reconcileItem(${e.index})" style="background:#e6f4ea; border:none; padding:10px; border-radius:50%; cursor:pointer;">✅</button>
-          </div>
-        `).join('');
-      } else { elements.historyList.innerHTML = "<p style='padding:10px'>No entries.</p>"; }
+      elements.historyList.innerHTML = "<p style='padding:10px; color:#65676b;'>Fetching records...</p>";
+      try {
+        const res = await fetch(`${CONFIG.WEB_APP_URL}?card=${card}`);
+        const data = await res.json();
+        if (data.entries && data.entries.length > 0) {
+          elements.historyList.innerHTML = data.entries.map(e => `
+            <div class="history-item">
+              <div class="history-details">
+                <span style="font-weight:600;">${e.where}</span>
+                <span style="font-size:0.75rem; color:#65676b;">${e.when}</span>
+              </div>
+              <div style="display:flex; align-items:center; gap:12px;">
+                <span class="history-price">$${parseFloat(e.price).toFixed(2)}</span>
+                <button onclick="reconcileItem(${e.index})" style="background:#e6f4ea; border:none; width:36px; height:36px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center;">✅</button>
+              </div>
+            </div>
+          `).join('');
+        } else { 
+          elements.historyList.innerHTML = "<p style='padding:10px; color:#65676b;'>No pending items for this card.</p>"; 
+        }
+      } catch (e) {
+        elements.historyList.innerHTML = "<p style='padding:10px; color:#c5221f;'>Error loading history.</p>";
+      }
     }
 
     async function reconcileItem(index) {
-      if (!confirm("Reconcile?")) return;
+      if (!confirm("Mark this as reconciled? (Will remove from sheet)")) return;
       await fetch(`${CONFIG.WEB_APP_URL}?action=deleteSpecific&index=${index}`);
       fetchHistory();
     }
