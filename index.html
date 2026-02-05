@@ -1,317 +1,185 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Expense Tracker</title>
-  <link rel="manifest" href="manifest.json">
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-    
-    body { 
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
-      max-width: 600px; 
-      margin: 0 auto; 
-      padding: 1rem; 
-      background: #f0f2f5; 
-      color: #1c1e21;
-    }
-
-    .container { 
-      background: white; 
-      padding: 1.25rem; 
-      border-radius: 20px; 
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05); 
-      width: 100%;
-      overflow: hidden;
-    }
-
-    h1 { margin-bottom: 1.25rem; color: #1a73e8; font-size: 1.4rem; text-align: center; font-weight: 800; }
-    
-    .config-section { background: #fff9c4; border: 1px solid #fbc02d; padding: 1rem; border-radius: 12px; margin-bottom: 1.5rem; }
-    .config-section input { width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 0.5rem; font-size: 0.9rem; }
-    .config-section button { width: 100%; padding: 0.75rem; background: #fbc02d; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: opacity 0.2s; }
-
-    .input-tabs { display: flex; gap: 8px; margin-bottom: 1.25rem; background: #f0f2f5; padding: 4px; border-radius: 12px; }
-    .tab-button { flex: 1; padding: 0.75rem; border: none; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 0.9rem; transition: all 0.2s; color: #65676b; background: transparent; }
-    .tab-button.active { background: white; color: #1a73e8; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-    
-    .tab-content { display: none; }
-    .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-
-    /* FLEXBOX FIX FOR BUTTON PUSHING OFF-SCREEN */
-    .manual-input-container { display: flex; gap: 0.6rem; width: 100%; align-items: center; }
-    #manualInput { 
-      flex: 1; 
-      min-width: 0; /* Essential fix for mobile flex squeeze */
-      padding: 1rem; 
-      border: 2px solid #e4e6eb; 
-      border-radius: 12px; 
-      font-size: 1rem; 
-      outline: none; 
-      transition: border-color 0.2s;
-    }
-    #manualInput:focus { border-color: #1a73e8; }
-    
-    #submitBtn { 
-      width: 54px; 
-      height: 54px; 
-      background: #1a73e8; 
-      color: white; 
-      border: none; 
-      border-radius: 12px; 
-      cursor: pointer; 
-      font-size: 1.4rem; 
-      display: flex; 
-      align-items: center; 
-      justify-content: center;
-      flex-shrink: 0; /* Prevents button from being squashed */
-    }
-    #submitBtn:active { transform: scale(0.92); background: #1557b0; }
-
-    .example-chip { 
-      padding: 0.5rem 0.8rem; 
-      background: #e8f0fe; 
-      border: 1px solid #d2e3fc; 
-      border-radius: 12px; 
-      font-size: 0.8rem; 
-      color: #1967d2; 
-      cursor: pointer; 
-      margin: 4px 2px; 
-      display: inline-block;
-      transition: all 0.1s;
-    }
-    .example-chip:active { background: #d2e3fc; transform: translateY(1px); }
-
-    #mic { 
-      width: 100%; 
-      padding: 2.5rem; 
-      font-size: 1.2rem; 
-      border: none; 
-      background: #34a853; 
-      color: white; 
-      border-radius: 16px; 
-      cursor: pointer; 
-      display: flex; 
-      flex-direction: column; 
-      align-items: center; 
-      gap: 12px; 
-      box-shadow: 0 4px 12px rgba(52, 168, 83, 0.3);
-    }
-    #mic.listening { background: #ea4335; animation: pulse 1.5s infinite; }
-    @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(0.97); } 100% { transform: scale(1); } }
-
-    .transcript-container { margin-top: 1.5rem; padding: 1rem; background: #f8f9fa; border-left: 4px solid #1a73e8; min-height: 50px; border-radius: 8px; font-style: italic; font-size: 0.9rem; }
-    #status { margin-top: 1rem; padding: 0.8rem; border-radius: 10px; display: none; text-align: center; font-weight: 600; font-size: 0.9rem; }
-    .success { background: #e6f4ea; color: #137333; display: block !important; }
-    .error { background: #fce8e6; color: #c5221f; display: block !important; }
-    .sending { background: #e8f0fe; color: #1967d2; display: block !important; }
-
-    .history-card { margin-top: 1.5rem; border-top: 1px solid #eee; padding-top: 1.5rem; }
-    .history-item { padding: 12px 0; border-bottom: 1px solid #f0f2f5; display: flex; justify-content: space-between; align-items: center; }
-    .history-details { display: flex; flex-direction: column; }
-    .history-price { font-weight: 700; color: #1c1e21; }
-    
-    .btn-delete { width: 100%; margin-top: 12px; padding: 0.8rem; background: #fff5f5; color: #c5221f; border: 1px solid #ffdada; border-radius: 12px; font-size: 0.85rem; cursor: pointer; font-weight: 600; }
-  </style>
+    <title>Parent Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#2b7de9">
+    <link rel="manifest" href="manifest.json">
+    <style>
+        body { font-family: sans-serif; padding: 20px; max-width: 600px; margin: auto; background-color: #f4f7f6; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        h2, h3 { margin-top: 0; color: #333; }
+        input { width: 100%; padding: 12px; margin: 10px 0; box-sizing: border-box; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; }
+        .btn-main { width: 100%; padding: 12px; background: #2b7de9; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        .btn-email { background: #6f42c1; color: white; border: none; border-radius: 6px; padding: 10px; width: 100%; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .filter-group { display: flex; flex-wrap: wrap; gap: 6px; margin: 20px 0; background: #eee; padding: 6px; border-radius: 8px; }
+        .filter-btn { flex: 1; min-width: 80px; padding: 8px 4px; border: none; border-radius: 6px; background: transparent; cursor: pointer; font-size: 12px; font-weight: bold; color: #555; }
+        .filter-btn.active { background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); color: #2b7de9; }
+        .list-item { border-bottom: 1px solid #eee; padding: 12px 0; list-style: none; display: flex; justify-content: space-between; align-items: center; }
+        .item-info { flex-grow: 1; margin-right: 10px; }
+        .item-controls { display: flex; gap: 8px; align-items: center; }
+        select { padding: 6px; border-radius: 4px; border: 1px solid #ccc; background: white; }
+        .btn-check { background: #28a745; color: white; border: none; border-radius: 4px; padding: 8px 12px; cursor: pointer; font-weight: bold; }
+        .status-msg { color: #2b7de9; font-size: 0.9em; text-align: center; height: 20px; margin: 10px 0; font-weight: bold; }
+        #setup-screen, #main-screen { display: none; }
+    </style>
 </head>
 <body>
 
-  <div class="container">
-    <h1>💳 Expense Tracker</h1>
-
-    <div class="config-section" id="configPanel">
-      <input type="text" id="urlInput" placeholder="Google Script URL">
-      <button onclick="updateURL()">Save URL</button>
+<div class="card">
+    <div id="setup-screen">
+        <h2>Welcome, Parent!</h2>
+        <p>Enter your name once to get started.</p>
+        <input type="text" id="parent-name" placeholder="Your Name">
+        <button class="btn-main" onclick="saveName()">Start Managing</button>
     </div>
 
-    <div class="input-tabs">
-      <button id="manualTabBtn" class="tab-button active" onclick="switchTab('manual')">⌨️ Manual</button>
-      <button id="voiceTabBtn" class="tab-button" onclick="switchTab('voice')">🎙️ Voice</button>
-    </div>
+    <div id="main-screen">
+        <h2 id="greeting">Hi!</h2>
+        <input type="text" id="entry" placeholder="Add an item (e.g. Bread)" onkeydown="if(event.key === 'Enter') sendData()">
+        <button class="btn-main" onclick="sendData()">Add to List</button>
+        <p id="status" class="status-msg"></p>
 
-    <div id="manualTab" class="tab-content active">
-      <div class="manual-input-container">
-        <input type="text" id="manualInput" placeholder="Store Price Card Date" spellcheck="false" autocomplete="off">
-        <button id="submitBtn">📤</button>
-      </div>
-      <div style="margin-top: 1rem; text-align: center;">
-        <div class="example-chip" onclick="fill('Citi')">Citi</div>
-        <div class="example-chip" onclick="fill('Discover')">Discover</div>
-        <div class="example-chip" onclick="fill('GreenState')">GreenState</div>
-        <div class="example-chip" onclick="fill('Costco')">Costco</div>
-        <div class="example-chip" onclick="fill('Yesterday')">Yesterday</div>
-      </div>
-    </div>
-
-    <div id="voiceTab" class="tab-content">
-      <button id="mic">
-        <span id="micIcon" style="font-size: 2.5rem;">🎙️</span>
-        <span id="micText">Tap to Speak</span>
-      </button>
-    </div>
-
-    <div class="transcript-container" id="transcript">Ready for your entry...</div>
-    <div id="status"></div>
-
-    <button onclick="deleteLast()" class="btn-delete">
-      Oops! Delete Last Entry
-    </button>
-
-    <div class="history-card">
-      <h3 style="font-size: 1rem; margin-bottom: 0.8rem;">Reconcile Records</h3>
-      <div style="display: flex; gap: 8px; margin-bottom: 1rem;">
-        <select id="cardFilter" style="flex: 1; padding: 0.75rem; border-radius: 10px; border: 1px solid #e4e6eb; background: white; font-size: 0.9rem;">
-          <option value="Citi">Citi</option>
-          <option value="GreenState">GreenState</option>
-          <option value="Discover">Discover</option>
-          <option value="Costco">Costco</option>
-          <option value="Verizon">Verizon</option>
-          <option value="Other">Other</option>
-        </select>
-        <button onclick="fetchHistory()" style="padding: 0.75rem 1.25rem; background: #1a73e8; color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: 600;">View</button>
-      </div>
-      <div id="historyList" style="font-size: 0.85rem; max-height: 300px; overflow-y: auto;"></div>
-    </div>
-
-    <div style="text-align: center; margin-top: 2rem; font-size: 0.65rem; color: #bdc3c7; letter-spacing: 1px;">V1.3.0 • PRECISION ENGINE</div>
-  </div>
-
-  <script>
-    const CONFIG = { WEB_APP_URL: localStorage.getItem('WEB_APP_URL') || "" };
-    const elements = {
-      mic: document.getElementById("mic"),
-      micText: document.getElementById("micText"),
-      manualInput: document.getElementById("manualInput"),
-      submitBtn: document.getElementById("submitBtn"),
-      transcript: document.getElementById("transcript"),
-      status: document.getElementById("status"),
-      urlInput: document.getElementById("urlInput"),
-      historyList: document.getElementById("historyList"),
-      configPanel: document.getElementById("configPanel")
-    };
-
-    if (CONFIG.WEB_APP_URL) {
-      elements.urlInput.value = CONFIG.WEB_APP_URL;
-      elements.configPanel.style.display = "none"; // Hide config if URL exists
-    }
-
-    function switchTab(tab) {
-      document.getElementById('voiceTab').classList.toggle('active', tab === 'voice');
-      document.getElementById('manualTab').classList.toggle('active', tab === 'manual');
-      document.getElementById('voiceTabBtn').classList.toggle('active', tab === 'voice');
-      document.getElementById('manualTabBtn').classList.toggle('active', tab === 'manual');
-    }
-
-    function fill(val) { 
-      elements.manualInput.value += (elements.manualInput.value ? " " : "") + val; 
-      elements.manualInput.focus(); 
-    }
-
-    function updateURL() {
-      const url = elements.urlInput.value.trim();
-      if (url.includes('script.google.com')) {
-        CONFIG.WEB_APP_URL = url;
-        localStorage.setItem('WEB_APP_URL', url);
-        showStatus("✅ Configuration Saved", "success");
-        setTimeout(() => elements.configPanel.style.display = "none", 1500);
-      } else {
-        showStatus("❌ Invalid Script URL", "error");
-      }
-    }
-
-    function showStatus(msg, type) {
-      elements.status.textContent = msg;
-      elements.status.className = type;
-      if (type !== 'sending') setTimeout(() => elements.status.className = '', 4000);
-    }
-
-    async function submitExpense(command) {
-      if (!CONFIG.WEB_APP_URL) return showStatus("⚠️ Set URL first", "error");
-      showStatus("📤 Sending...", "sending");
-      try {
-        await fetch(CONFIG.WEB_APP_URL, {
-          method: "POST", mode: "no-cors",
-          headers: { "Content-Type": "application/x-www-form-urlencoded" },
-          body: new URLSearchParams({ 'command': command })
-        });
-        showStatus("✅ Saved to Sheet", "success");
-        elements.manualInput.value = "";
-      } catch (err) { showStatus("❌ Network Error", "error"); }
-    }
-
-    elements.manualInput.addEventListener("keypress", (e) => {
-      if (e.key === "Enter") { e.preventDefault(); elements.submitBtn.click(); }
-    });
-
-    elements.submitBtn.onclick = () => {
-      const val = elements.manualInput.value.trim();
-      if (val) { 
-        elements.transcript.textContent = `"${val}"`; 
-        submitExpense(val); 
-      }
-    };
-
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (SpeechRecognition) {
-      const recognition = new SpeechRecognition();
-      elements.mic.onclick = () => { 
-        recognition.start(); 
-        elements.mic.classList.add('listening'); 
-        elements.micText.textContent = "Listening..."; 
-      };
-      recognition.onresult = (e) => { 
-        const text = e.results[0][0].transcript; 
-        elements.transcript.textContent = `"${text}"`; 
-        submitExpense(text); 
-      };
-      recognition.onend = () => { 
-        elements.mic.classList.remove('listening'); 
-        elements.micText.textContent = "Tap to Speak"; 
-      };
-    }
-
-    async function deleteLast() {
-      if (!confirm("Delete the most recent entry?")) return;
-      showStatus("🗑️ Deleting...", "sending");
-      await fetch(`${CONFIG.WEB_APP_URL}?action=deleteLast`);
-      showStatus("✅ Deleted", "success");
-      if (elements.historyList.innerHTML !== "") fetchHistory();
-    }
-
-    async function fetchHistory() {
-      const card = document.getElementById('cardFilter').value;
-      elements.historyList.innerHTML = "<p style='padding:10px; color:#65676b;'>Fetching records...</p>";
-      try {
-        const res = await fetch(`${CONFIG.WEB_APP_URL}?card=${card}`);
-        const data = await res.json();
-        if (data.entries && data.entries.length > 0) {
-          elements.historyList.innerHTML = data.entries.map(e => `
-            <div class="history-item">
-              <div class="history-details">
-                <span style="font-weight:600;">${e.where}</span>
-                <span style="font-size:0.75rem; color:#65676b;">${e.when}</span>
-              </div>
-              <div style="display:flex; align-items:center; gap:12px;">
-                <span class="history-price">$${parseFloat(e.price).toFixed(2)}</span>
-                <button onclick="reconcileItem(${e.index})" style="background:#e6f4ea; border:none; width:36px; height:36px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center;">✅</button>
-              </div>
+        <div id="list-container">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h3>Current Needs</h3>
+                <span onclick="clearName()" style="font-size: 0.7em; color: #ccc; cursor: pointer;">(Logout)</span>
             </div>
-          `).join('');
-        } else { 
-          elements.historyList.innerHTML = "<p style='padding:10px; color:#65676b;'>No pending items for this card.</p>"; 
-        }
-      } catch (e) {
-        elements.historyList.innerHTML = "<p style='padding:10px; color:#c5221f;'>Error loading history.</p>";
-      }
+            
+            <div class="filter-group">
+                <button class="filter-btn active" onclick="setFilter(this, 'all')">All</button>
+                <button class="filter-btn" onclick="setFilter(this, 'none')">No Store</button>
+                <button class="filter-btn" onclick="setFilter(this, 'Hy-Vee')">Hy-Vee</button>
+                <button class="filter-btn" onclick="setFilter(this, 'Fareway')">Fareway</button>
+                <button class="filter-btn" onclick="setFilter(this, 'Target')">Target</button>
+                <button class="filter-btn" onclick="setFilter(this, 'Wal-Mart')">Wal-Mart</button>
+                <button class="filter-btn" onclick="setFilter(this, 'Costco')">Costco</button>
+            </div>
+            
+            <button class="btn-email" onclick="emailCurrentList()">✉️ Email This View</button>
+            <ul id="needs-list" style="padding: 0;"></ul>
+        </div>
+    </div>
+</div>
+
+<script>
+    const WEB_APP_URL = "YOUR_GOOGLE_SCRIPT_URL_HERE";
+    let currentData = [];
+    const STORES = ["Hy-Vee", "Fareway", "Target", "Wal-Mart", "Costco"];
+
+    window.onload = function() {
+        const savedName = localStorage.getItem('parentName');
+        if (savedName) showMain(savedName);
+        else document.getElementById('setup-screen').style.display = 'block';
+    };
+
+    function saveName() {
+        const name = document.getElementById('parent-name').value.trim();
+        if (name) { localStorage.setItem('parentName', name); showMain(name); }
     }
 
-    async function reconcileItem(index) {
-      if (!confirm("Mark this as reconciled? (Will remove from sheet)")) return;
-      await fetch(`${CONFIG.WEB_APP_URL}?action=deleteSpecific&index=${index}`);
-      fetchHistory();
+    function showMain(name) {
+        document.getElementById('setup-screen').style.display = 'none';
+        document.getElementById('main-screen').style.display = 'block';
+        document.getElementById('greeting').innerText = "Hi, " + name + "!";
+        fetchList();
     }
-  </script>
+
+    function clearName() { localStorage.removeItem('parentName'); location.reload(); }
+
+    function toTitleCase(str) { return str.toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '); }
+
+    async function sendData() {
+        const input = document.getElementById('entry');
+        if(!input.value) return;
+        const name = localStorage.getItem('parentName');
+        const text = toTitleCase(name) + " " + toTitleCase(input.value);
+        document.getElementById('status').innerText = "Saving...";
+        await fetch(WEB_APP_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "add", text: text }) });
+        document.getElementById('status').innerText = "✅ Added!";
+        input.value = "";
+        fetchList();
+    }
+
+    async function fetchList() {
+        try {
+            const response = await fetch(WEB_APP_URL);
+            currentData = await response.json();
+            const activeBtn = document.querySelector('.filter-btn.active');
+            renderList(activeBtn.innerText === "All" ? "all" : (activeBtn.innerText === "No Store" ? "none" : activeBtn.innerText));
+        } catch (e) { console.log(e); }
+    }
+
+    function setFilter(btn, val) {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderList(val);
+    }
+
+    function renderList(filter) {
+        const listElement = document.getElementById('needs-list');
+        listElement.innerHTML = "";
+        let filtered = currentData;
+        if (filter === 'none') filtered = currentData.filter(e => !e.store);
+        else if (filter !== 'all') filtered = currentData.filter(e => e.store === filter);
+        
+        filtered.forEach(entry => {
+            const li = document.createElement('li');
+            li.className = "list-item";
+            let storeOptions = `<option value="">Select Store</option>`;
+            STORES.forEach(s => storeOptions += `<option value="${s}" ${entry.store === s ? 'selected' : ''}>${s}</option>`);
+            li.innerHTML = `
+                <div class="item-info"><strong>${entry.name}</strong>: ${entry.item}<br><small style="color:#888;">${entry.date}</small></div>
+                <div class="item-controls">
+                    <select onchange="updateStore(${entry.id}, this.value)">${storeOptions}</select>
+                    <button class="btn-check" onclick="markBought('${entry.name}', '${entry.item}')">✓</button>
+                </div>`;
+            listElement.appendChild(li);
+        });
+    }
+
+    async function updateStore(id, val) {
+        await fetch(WEB_APP_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "update", type: "store", index: id, value: val }) });
+        fetchList();
+    }
+
+    async function markBought(name, item) {
+        if(!confirm(`Remove "${item}"?`)) return;
+        await fetch(WEB_APP_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "delete", name: name, item: item }) });
+        fetchList();
+    }
+
+    // ON-DEMAND EMAIL FUNCTION
+    async function emailCurrentList() {
+        const activeBtn = document.querySelector('.filter-btn.active');
+        const filterName = activeBtn.innerText;
+        document.getElementById('status').innerText = "Sending list to email...";
+        
+        // Use the current visible list
+        let filtered = currentData;
+        if (filterName === 'No Store') filtered = currentData.filter(e => !e.store);
+        else if (filterName !== 'All') filtered = currentData.filter(e => e.store === filterName);
+
+        if (filtered.length === 0) {
+            alert("Nothing to send for this view!");
+            return;
+        }
+
+        const itemsString = filtered.map(e => `${e.name}: ${e.item}`).join("\n");
+        
+        await fetch(WEB_APP_URL, { 
+            method: 'POST', 
+            mode: 'no-cors', 
+            body: JSON.stringify({ 
+                action: "email_demand", 
+                store: filterName, 
+                items: itemsString 
+            }) 
+        });
+        document.getElementById('status').innerText = "✉️ List Sent!";
+        setTimeout(() => document.getElementById('status').innerText = "", 3000);
+    }
+</script>
 </body>
 </html>
