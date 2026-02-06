@@ -1,15 +1,24 @@
 {
+  "name": "Expense Tracker Pro",
   "short_name": "Expenses",
-  "name": "Expense Tracker",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#f0f2f5",
+  "theme_color": "#1a73e8",
   "icons": [
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/2611/2611152.png",
+      "src": "https://cdn-icons-png.flaticon.com/512/2344/2344132.png",
+      "sizes": "512x512",
       "type": "image/png",
-      "sizes": "512x512"
+      "purpose": "any maskable"
     }
   ],
-  "start_url": ".",
-  "display": "standalone",
-  "theme_color": "#1a73e8",
-  "background_color": "#ffffff"
+  "shortcuts": [
+    {
+      "name": "Quick Log",
+      "short_name": "Log",
+      "url": "add.html",
+      "description": "Log a new expense quickly"
+    }
+  ]
 }
