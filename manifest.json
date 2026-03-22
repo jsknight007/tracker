@@ -1,5 +1,5 @@
 {
-  "name": "Expense Tracker Pro",
+  "name": "Expense Tracker",
   "short_name": "Expenses",
   "start_url": "index.html",
   "display": "standalone",
@@ -11,14 +11,6 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
-    }
-  ],
-  "shortcuts": [
-    {
-      "name": "Quick Log",
-      "short_name": "Log",
-      "url": "add.html",
-      "description": "Log a new expense quickly"
     }
   ]
 }
