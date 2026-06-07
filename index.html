@@ -3,27 +3,35 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Expense Tracker Admin</title>
+  <title>Expense Tracker Master</title>
   <link rel="manifest" href="manifest.json">
+  <script type="importmap"> { "imports": { "@google/generative-ai": "https://esm.run/@google/generative-ai@latest" } } </script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 1rem; background: #f0f2f5; color: #1c1e21; }
     .container { background: white; padding: 1.5rem; border-radius: 20px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05); width: 100%; overflow: hidden; }
     h1 { margin-bottom: 1.5rem; color: #1a73e8; font-size: 1.4rem; text-align: center; font-weight: 800; letter-spacing: -0.5px; }
     
-    .manual-input-container { display: flex; gap: 0.6rem; width: 100%; align-items: center; margin-bottom: 1rem; }
+    /* SETTINGS BOX FOR AI KEY ONLY */
+    .settings-toggle { background: #f1f5f9; border: none; color: #64748b; font-size: 0.75rem; padding: 6px 12px; border-radius: 8px; font-weight: 600; display: block; margin: 0 auto 1.5rem auto; cursor: pointer; }
+    .config-section { background: #fff9c4; border: 1px solid #fbc02d; padding: 1rem; border-radius: 12px; margin-bottom: 1.5rem; text-align: left; }
+    .config-section input { width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 8px; margin-top: 4px; font-size: 0.9rem; }
+    .config-section button { width: 100%; padding: 0.75rem; background: #fbc02d; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 8px; }
+
+    .manual-input-container { display: flex; gap: 0.5rem; width: 100%; align-items: center; margin-bottom: 1rem; }
     #manualInput { 
       flex: 1; min-width: 0; padding: 1.1rem; border: 2px solid #e4e6eb; border-radius: 14px; 
       font-size: 1.1rem; outline: none; transition: border-color 0.2s; background: #f9f9f9;
     }
     #manualInput:focus { border-color: #1a73e8; background: white; }
     
-    #submitBtn { 
-      width: 58px; height: 58px; background: #1a73e8; color: white; border: none; 
-      border-radius: 14px; cursor: pointer; font-size: 1.5rem; display: flex; 
-      align-items: center; justify-content: center; flex-shrink: 0; 
+    .action-btn { 
+      width: 54px; height: 54px; border: none; border-radius: 14px; cursor: pointer; 
+      font-size: 1.4rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; 
     }
-    #submitBtn:active { transform: scale(0.92); background: #1557b0; }
+    #scanBtn { background: #e8f0fe; color: #1a73e8; border: 1px solid #d2e3fc; }
+    #submitBtn { background: #1a73e8; color: white; }
+    .action-btn:active { transform: scale(0.92); }
 
     .example-chips { text-align: center; margin-bottom: 1.5rem; }
     .example-chip { 
@@ -53,9 +61,20 @@
   <div class="container">
     <h1>💳 Expense Tracker</h1>
 
+    <button class="settings-toggle" onclick="document.getElementById('configPanel').toggleAttribute('hidden')">⚙️ GEMINI SETUP</button>
+
+    <div class="config-section" id="configPanel" hidden>
+      <label style="font-size:0.75rem; font-weight:bold; color:#555;">Gemini API Key</label>
+      <input type="password" id="keyInput" placeholder="AI Key for Scanning">
+      <button onclick="saveAIKey()">Save API Key</button>
+    </div>
+
     <div class="manual-input-container">
+      <button id="scanBtn" class="action-btn" onclick="document.getElementById('fileIn').click()">📷</button>
+      <input type="file" id="fileIn" accept="image/*" capture="environment" style="display:none">
+      
       <input type="text" id="manualInput" placeholder="Store Price Card Date" spellcheck="false" autocomplete="off">
-      <button id="submitBtn">📤</button>
+      <button id="submitBtn" class="action-btn">📤</button>
     </div>
 
     <div class="example-chips">
@@ -86,21 +105,34 @@
       <div id="historyList"></div>
     </div>
     
-    <div style="text-align: center; margin-top: 2rem; font-size: 0.7rem; color: #bdc3c7; font-weight: 600;">V1.5.0 • MANUAL PRO</div>
+    <div style="text-align: center; margin-top: 2rem; font-size: 0.7rem; color: #bdc3c7; font-weight: 600;">V2.0.0 • HYBRID COGNITION ENGINE</div>
   </div>
 
-  <script>
-    // PASTE YOUR URL HERE
-    const CONFIG = { WEB_APP_URL: "https://script.google.com/macros/s/AKfycbxy2OhLXzjmz1JJLU6RgCzKUP78WL4jJ29tQNX6l3AhgIousJKZ7WwbAvXrpiZkHOKc/exec" };
+  <script type="module">
+    import { GoogleGenerativeAI } from "@google/generative-ai";
+
+    // 1. HARDCODE YOUR SCRIPT URL HERE
+    const CONFIG = { WEB_APP_URL: "YOUR_GOOGLE_SCRIPT_URL_HERE" };
     
     const elements = {
       manualInput: document.getElementById("manualInput"),
       submitBtn: document.getElementById("submitBtn"),
       status: document.getElementById("status"),
-      historyList: document.getElementById("historyList")
+      historyList: document.getElementById("historyList"),
+      fileIn: document.getElementById("fileIn"),
+      keyInput: document.getElementById("keyInput")
     };
 
-    function fill(val) { 
+    // Load Saved Gemini Key if available
+    elements.keyInput.value = localStorage.getItem('gemini_key') || '';
+
+    window.saveAIKey = () => {
+      localStorage.setItem('gemini_key', elements.keyInput.value.trim());
+      showStatus("✅ API Key Saved", "success");
+      setTimeout(() => document.getElementById('configPanel').setAttribute('hidden', ''), 1000);
+    };
+
+    window.fill = (val) => { 
       elements.manualInput.value += (elements.manualInput.value ? " " : "") + val; 
       elements.manualInput.focus(); 
     }
@@ -108,12 +140,50 @@
     function showStatus(msg, type) {
       elements.status.textContent = msg;
       elements.status.className = type;
-      if (type !== 'sending') setTimeout(() => elements.status.className = '', 3500);
+      if (type !== 'sending') setTimeout(() => elements.status.className = '', 4000);
     }
+
+    // 2. RECEIPT CAMERA SCANNER LOGIC (Converts image parsing directly into our precision natural language command format)
+    elements.fileIn.onchange = async (e) => {
+      const file = e.target.files[0]; 
+      if (!file) return;
+      
+      const apiKey = localStorage.getItem('gemini_key');
+      if (!apiKey) {
+        showStatus("⚠️ Please configure your Gemini API Key first!", "error");
+        document.getElementById('configPanel').removeAttribute('hidden');
+        return;
+      }
+
+      showStatus("⏳ Gemini is scanning receipt...", "sending");
+      
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        try {
+          const genAI = new GoogleGenerativeAI(apiKey);
+          const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash" });
+          
+          const prompt = "Analyze this receipt image. Extract the store name, the absolute final grand total parameter, the card/payment provider if visible (e.g. Citi, Discover, Costco, Visa), and the transaction date. Output ONLY a clean single-line conversational string formatted strictly like this template: [StoreName] $[Amount] [CardType] [Month Day] (Example output string: 'Target $42.50 Discover May 12th'). Do not include markdown code blocks or formatting.";
+          
+          const result = await model.generateContent([prompt, { inlineData: { data: reader.result.split(',')[1], mimeType: "image/jpeg" } }]);
+          const parsedCommand = result.response.text().trim().replace(/`/g, "");
+
+          if (parsedCommand) {
+            elements.manualInput.value = parsedCommand;
+            showStatus("✨ Receipt Loaded! Review & click send.", "success");
+          } else {
+            showStatus("❌ Couldn't parse receipt text clearly.", "error");
+          }
+        } catch (err) { 
+          showStatus("❌ Scanning error: " + err.message, "error"); 
+        }
+      };
+      reader.readAsDataURL(file);
+    };
 
     async function submitExpense(command) {
       if (!command) return;
-      showStatus("Sending...", "sending");
+      showStatus("Sending to Sheet...", "sending");
       try {
         await fetch(CONFIG.WEB_APP_URL, {
           method: "POST", mode: "no-cors",
@@ -127,15 +197,16 @@
     elements.manualInput.addEventListener("keypress", (e) => { if (e.key === "Enter") elements.submitBtn.click(); });
     elements.submitBtn.onclick = () => { submitExpense(elements.manualInput.value.trim()); };
 
-    async function deleteLast() {
+    window.deleteLast = async () => {
       if (confirm("Delete the most recent entry?")) {
+        showStatus("Deleting...", "sending");
         await fetch(`${CONFIG.WEB_APP_URL}?action=deleteLast`);
         showStatus("🗑️ Entry deleted", "success");
-        if (elements.historyList.innerHTML !== "") fetchHistory();
+        if (elements.historyList.innerHTML !== "") window.fetchHistory();
       }
     }
 
-    async function fetchHistory() {
+    window.fetchHistory = async () => {
       const card = document.getElementById('cardFilter').value;
       elements.historyList.innerHTML = "<p style='padding:10px; font-size:0.9rem; color:#65676b;'>Searching...</p>";
       try {
@@ -158,10 +229,10 @@
       } catch (e) { elements.historyList.innerHTML = "<p style='padding:10px; color:#c5221f;'>Fetch failed.</p>"; }
     }
 
-    async function reconcileItem(index) {
+    window.reconcileItem = async (index) => {
       if (confirm("Remove this item?")) {
         await fetch(`${CONFIG.WEB_APP_URL}?action=deleteSpecific&index=${index}`);
-        fetchHistory();
+        window.fetchHistory();
       }
     }
   </script>
