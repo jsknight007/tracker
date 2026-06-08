@@ -143,7 +143,7 @@
       if (type !== 'sending') setTimeout(() => elements.status.className = '', 4000);
     }
 
-    // 2. RECEIPT CAMERA SCANNER LOGIC (Converts image parsing directly into our precision natural language command format)
+// 2. RECEIPT CAMERA SCANNER LOGIC (Updated to focus only on Store, Price, and Date)
     elements.fileIn.onchange = async (e) => {
       const file = e.target.files[0]; 
       if (!file) return;
@@ -163,14 +163,15 @@
           const genAI = new GoogleGenerativeAI(apiKey);
           const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash" });
           
-          const prompt = "Analyze this receipt image. Extract the store name, the absolute final grand total parameter, the card/payment provider if visible (e.g. Citi, Discover, Costco, Visa), and the transaction date. Output ONLY a clean single-line conversational string formatted strictly like this template: [StoreName] $[Amount] [CardType] [Month Day] (Example output string: 'Target $42.50 Discover May 12th'). Do not include markdown code blocks or formatting.";
+          // Tightened prompt focusing ONLY on Store, Amount, and Date
+          const prompt = "Analyze this receipt image. Extract the store name, the absolute final grand total parameter, and the transaction date. Output ONLY a clean single-line conversational string formatted strictly like this template: [StoreName] $[Amount] [Month Day] (Example output string: 'Target $42.50 May 12th'). Do not attempt to guess or extract the payment method or credit card name. Do not include markdown code blocks or formatting.";
           
           const result = await model.generateContent([prompt, { inlineData: { data: reader.result.split(',')[1], mimeType: "image/jpeg" } }]);
           const parsedCommand = result.response.text().trim().replace(/`/g, "");
 
           if (parsedCommand) {
             elements.manualInput.value = parsedCommand;
-            showStatus("✨ Receipt Loaded! Review & click send.", "success");
+            showStatus("✨ Scan Loaded! Tap a card chip if needed, then send.", "success");
           } else {
             showStatus("❌ Couldn't parse receipt text clearly.", "error");
           }
@@ -180,7 +181,7 @@
       };
       reader.readAsDataURL(file);
     };
-
+    
     async function submitExpense(command) {
       if (!command) return;
       showStatus("Sending to Sheet...", "sending");
