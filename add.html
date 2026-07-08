@@ -6,61 +6,91 @@
   <title>Quick Log</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 500px; margin: 0 auto; padding: 3rem 1.5rem; background: #f0f2f5; }
-    .container { background: white; padding: 1.5rem; border-radius: 28px; box-shadow: 0 15px 35px rgba(0,0,0,0.07); text-align: center; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 500px; margin: 0 auto; padding: 3rem 1.5rem; background: linear-gradient(135deg, #f0f2f5 0%, #e2e8f0 100%); min-height: 100vh; }
+    .container { background: white; padding: 1.5rem; border-radius: 28px; box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.06); text-align: center; }
     h1 { margin-bottom: 2rem; color: #1a73e8; font-size: 1.1rem; letter-spacing: 1.5px; font-weight: 800; }
-    
+
     .input-group { display: flex; gap: 10px; margin-bottom: 1.5rem; }
-    input { 
-      flex: 1; padding: 1.1rem; border: 2px solid #e4e6eb; border-radius: 16px; 
+    input {
+      flex: 1; padding: 1.1rem; border: 2px solid #e4e6eb; border-radius: 16px;
       font-size: 1.1rem; outline: none; min-width: 0; background: #f9f9f9;
     }
     input:focus { border-color: #1a73e8; background: white; }
-    
-    button#submitBtn { 
-      width: 60px; height: 60px; background: #1a73e8; color: white; 
-      border: none; border-radius: 16px; cursor: pointer; font-size: 1.5rem; 
+
+    button#submitBtn {
+      width: 60px; height: 60px; background: #1a73e8; color: white;
+      border: none; border-radius: 16px; cursor: pointer; font-size: 1.5rem;
       flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
     }
-    button:active { transform: scale(0.92); background: #1557b0; }
+    button#submitBtn:active { transform: scale(0.92); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
 
     .chips { margin-bottom: 2rem; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
-    .chip { padding: 10px 16px; background: #e8f0fe; border-radius: 12px; font-size: 0.85rem; color: #1967d2; cursor: pointer; font-weight: 600; }
-    .chip:active { background: #d2e3fc; }
+    .chip { padding: 10px 16px; background: #e8f0fe; border-radius: 12px; font-size: 0.85rem; color: #1967d2; cursor: pointer; font-weight: 600; border: none; transition: transform 0.15s ease; }
+    .chip:active { background: #d2e3fc; transform: scale(0.95); }
 
-    #status { margin: 1rem 0; padding: 12px; border-radius: 12px; font-size: 0.9rem; font-weight: 600; display: none; }
-    .success { background: #e6f4ea; color: #137333; display: block !important; }
-    .sending { background: #e8f0fe; color: #1967d2; display: block !important; }
+    .undo-link { color: #c5221f; font-size: 0.8rem; text-decoration: none; font-weight: 600; cursor: pointer; margin-top: 2rem; display: inline-block; opacity: 0.6; border: none; background: none; }
 
-    .undo-link { color: #c5221f; font-size: 0.8rem; text-decoration: none; font-weight: 600; cursor: pointer; margin-top: 2rem; display: inline-block; opacity: 0.6; }
+    .toast {
+      position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px);
+      padding: 12px 24px; border-radius: 50px; font-size: 0.85rem; font-weight: 600;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 1000; opacity: 0;
+      transition: transform 0.3s ease, opacity 0.3s ease; white-space: nowrap;
+    }
+    .toast.visible { transform: translateX(-50%) translateY(0); opacity: 1; }
+    .toast.t-success { background: #e6f4ea; color: #137333; }
+    .toast.t-error { background: #fce8e6; color: #c5221f; }
+    .toast.t-info { background: #e8f0fe; color: #1967d2; }
   </style>
 </head>
 <body>
 
 <div class="container">
   <h1>QUICK LOG</h1>
-  
+  <button class="undo-link" style="margin:0 auto 1rem auto; display:block; opacity:0.5; font-size:0.7rem;" onclick="document.getElementById('cfgPanel').toggleAttribute('hidden')">Settings</button>
+  <div id="cfgPanel" hidden style="margin-bottom:1rem;">
+    <input type="text" id="urlCfg" placeholder="Apps Script URL" style="padding:10px; border:1px solid #ddd; border-radius:10px; width:100%; margin-bottom:8px; font-size:0.85rem;">
+    <button class="chip" onclick="localStorage.setItem('script_url',document.getElementById('urlCfg').value.trim()); showToast('Saved','success'); document.getElementById('cfgPanel').setAttribute('hidden','');" style="width:100%; padding:10px;">Save URL</button>
+  </div>
+
   <div class="input-group">
     <input type="text" id="cmd" placeholder="Store 0.00 Card" autocomplete="off" spellcheck="false">
     <button id="submitBtn" onclick="send()">🚀</button>
   </div>
 
   <div class="chips">
-    <span class="chip" onclick="add('Citi')">Citi</span>
-    <span class="chip" onclick="add('Discover')">Discover</span>
-    <span class="chip" onclick="add('Costco')">Costco</span>
-    <span class="chip" onclick="add('GreenState')">GreenState</span>
-    <span class="chip" onclick="add('Yesterday')">Yesterday</span>
+    <button class="chip" onclick="add('Citi')">Citi</button>
+    <button class="chip" onclick="add('Discover')">Discover</button>
+    <button class="chip" onclick="add('Costco')">Costco</button>
+    <button class="chip" onclick="add('GreenState')">GreenState</button>
+    <button class="chip" onclick="add('Yesterday')">Yesterday</button>
   </div>
 
-  <div id="status"></div>
-  <div class="undo-link" onclick="undo()">Mistake? Delete Last Entry</div>
+  <button class="undo-link" onclick="undo()">Mistake? Delete Last Entry</button>
 </div>
 
+<div id="toast" class="toast"></div>
+
 <script>
-  // HARDCODED URL - PASTE YOUR SCRIPT URL BETWEEN THE QUOTES BELOW
-  const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxy2OhLXzjmz1JJLU6RgCzKUP78WL4jJ29tQNX6l3AhgIousJKZ7WwbAvXrpiZkHOKc/exec"; 
+  function getScriptUrl() { return localStorage.getItem('script_url') || ''; }
   const input = document.getElementById('cmd');
+
+  const urlCfg = document.getElementById('urlCfg');
+  urlCfg.value = getScriptUrl();
+  if (!getScriptUrl()) document.getElementById('cfgPanel').removeAttribute('hidden');
+
+  async function fetchWithRetry(url, opts = {}) {
+    try { return await fetch(url, opts); }
+    catch (e) { await new Promise(r => setTimeout(r, 2000)); return await fetch(url, opts); }
+  }
+
+  function showToast(msg, type) {
+    const toast = document.getElementById('toast');
+    toast.textContent = msg;
+    toast.className = 'toast t-' + type;
+    requestAnimationFrame(() => { toast.classList.add('visible'); });
+    setTimeout(() => { toast.classList.remove('visible'); }, 3500);
+  }
 
   function add(val) {
     input.value += (input.value ? " " : "") + val;
@@ -70,33 +100,38 @@
   async function send() {
     const val = input.value.trim();
     if (!val) return;
-    
-    msg("Logging...", "sending");
-    try {
-      await fetch(WEB_APP_URL, {
-        method: "POST", mode: "no-cors",
-        body: new URLSearchParams({ 'command': val })
-      });
-      msg("✅ Saved", "success");
-      input.value = "";
-    } catch (e) { alert("Connection error."); }
-  }
 
-  function msg(t, c) {
-    const s = document.getElementById('status');
-    s.textContent = t; s.className = c;
-    if (c === 'success') setTimeout(() => s.className = '', 3000);
+    showToast("Logging...", "info");
+    try {
+      const params = new URLSearchParams({ action: "add", command: val });
+      const response = await fetchWithRetry(getScriptUrl() + "?" + params);
+      const data = await response.json();
+      if (data.error) {
+        showToast("Error: " + data.error, "error");
+      } else {
+        showToast(data.parsed.store + " $" + data.parsed.price, "success");
+        input.value = "";
+      }
+    } catch (e) { showToast("Connection error", "error"); }
   }
 
   async function undo() {
     if (confirm("Delete last entry?")) {
-      await fetch(`${WEB_APP_URL}?action=deleteLast`);
-      msg("🗑️ Deleted", "success");
+      showToast("Deleting...", "info");
+      try {
+        const response = await fetchWithRetry(getScriptUrl() + "?action=deleteLast");
+        const data = await response.json();
+        if (data.error) {
+          showToast("Error: " + data.error, "error");
+        } else {
+          showToast("Deleted", "success");
+        }
+      } catch (e) { showToast("Connection error", "error"); }
     }
   }
 
   input.addEventListener("keypress", (e) => { if (e.key === "Enter") send(); });
 </script>
-
+<div style="text-align:center; margin-top:1rem; font-size:0.7rem; color:#bdc3c7; font-weight:600;">V3.2.0</div>
 </body>
 </html>

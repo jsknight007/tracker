@@ -5,92 +5,122 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Expense Tracker Master</title>
   <link rel="manifest" href="manifest.json">
-  <script type="importmap"> { "imports": { "@google/generative-ai": "https://esm.run/@google/generative-ai@latest" } } </script>
+  <script type="importmap"> { "imports": { "@google/generative-ai": "https://esm.run/@google/generative-ai@0.21.0" } } </script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 1rem; background: #f0f2f5; color: #1c1e21; }
-    .container { background: white; padding: 1.5rem; border-radius: 20px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05); width: 100%; overflow: hidden; }
-    h1 { margin-bottom: 1.5rem; color: #1a73e8; font-size: 1.4rem; text-align: center; font-weight: 800; letter-spacing: -0.5px; }
-    
-    /* SETTINGS BOX FOR AI KEY ONLY */
-    .settings-toggle { background: #f1f5f9; border: none; color: #64748b; font-size: 0.75rem; padding: 6px 12px; border-radius: 8px; font-weight: 600; display: block; margin: 0 auto 1.5rem auto; cursor: pointer; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 1rem; background: linear-gradient(135deg, #f0f2f5 0%, #e2e8f0 100%); color: #1c1e21; min-height: 100vh; }
+    .container { background: white; padding: 1.5rem; border-radius: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.06); width: 100%; overflow: hidden; }
+    h1 { margin-bottom: 1rem; color: #1a73e8; font-size: 1.4rem; text-align: center; font-weight: 800; letter-spacing: -0.5px; }
+
+    .settings-toggle { background: #f1f5f9; border: none; color: #64748b; font-size: 0.75rem; padding: 6px 12px; border-radius: 8px; font-weight: 600; display: block; margin: 0 auto 1rem auto; cursor: pointer; transition: transform 0.15s ease; }
+    .settings-toggle:active { transform: scale(0.95); }
     .config-section { background: #fff9c4; border: 1px solid #fbc02d; padding: 1rem; border-radius: 12px; margin-bottom: 1.5rem; text-align: left; }
     .config-section input { width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 8px; margin-top: 4px; font-size: 0.9rem; }
     .config-section button { width: 100%; padding: 0.75rem; background: #fbc02d; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 8px; }
 
+    .tab-bar { display: flex; background: #f1f5f9; border-radius: 12px; padding: 4px; margin-bottom: 1.5rem; }
+    .tab-btn { flex: 1; padding: 10px; border: none; border-radius: 10px; font-size: 0.85rem; font-weight: 700; cursor: pointer; background: transparent; color: #64748b; transition: all 0.2s ease; }
+    .tab-btn.active { background: white; color: #1a73e8; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
     .manual-input-container { display: flex; gap: 0.5rem; width: 100%; align-items: center; margin-bottom: 1rem; }
-    #manualInput { 
-      flex: 1; min-width: 0; padding: 1.1rem; border: 2px solid #e4e6eb; border-radius: 14px; 
+    #manualInput {
+      flex: 1; min-width: 0; padding: 1.1rem; border: 2px solid #e4e6eb; border-radius: 14px;
       font-size: 1.1rem; outline: none; transition: border-color 0.2s; background: #f9f9f9;
     }
     #manualInput:focus { border-color: #1a73e8; background: white; }
-    
-    .action-btn { 
-      width: 54px; height: 54px; border: none; border-radius: 14px; cursor: pointer; 
-      font-size: 1.4rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; 
+
+    .action-btn {
+      width: 54px; height: 54px; border: none; border-radius: 14px; cursor: pointer;
+      font-size: 1.4rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
     }
+    .action-btn:active { transform: scale(0.92); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
     #scanBtn { background: #e8f0fe; color: #1a73e8; border: 1px solid #d2e3fc; }
     #submitBtn { background: #1a73e8; color: white; }
-    .action-btn:active { transform: scale(0.92); }
 
-    .example-chips { text-align: center; margin-bottom: 1.5rem; }
-    .example-chip { 
-      padding: 0.6rem 0.9rem; background: #e8f0fe; border: 1px solid #d2e3fc; 
-      border-radius: 12px; font-size: 0.85rem; color: #1967d2; cursor: pointer; 
-      margin: 4px; display: inline-block; font-weight: 600;
+    .chip-group { margin-bottom: 1rem; }
+    .chip-label { font-size: 0.6rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; padding-left: 4px; }
+    .chip-row { display: flex; flex-wrap: wrap; gap: 6px; }
+    .example-chip {
+      padding: 0.6rem 0.9rem; background: #e8f0fe; border: 1px solid #d2e3fc;
+      border-radius: 12px; font-size: 0.85rem; color: #1967d2; cursor: pointer;
+      font-weight: 600; transition: transform 0.15s ease;
     }
     .example-chip:active { background: #d2e3fc; transform: translateY(1px); }
 
-    #status { margin-top: 1rem; padding: 0.8rem; border-radius: 10px; display: none; text-align: center; font-weight: 600; font-size: 0.9rem; }
-    .success { background: #e6f4ea; color: #137333; display: block !important; }
-    .error { background: #fce8e6; color: #c5221f; display: block !important; }
-    .sending { background: #e8f0fe; color: #1967d2; display: block !important; }
+    .btn-delete { width: 100%; margin: 1rem 0 0 0; padding: 0.9rem; background: #fff5f5; color: #c5221f; border: 1px solid #ffdada; border-radius: 14px; font-size: 0.9rem; cursor: pointer; font-weight: 600; transition: transform 0.15s ease; }
+    .btn-delete:active { transform: scale(0.95); }
 
-    .btn-delete { width: 100%; margin: 1rem 0; padding: 0.9rem; background: #fff5f5; color: #c5221f; border: 1px solid #ffdada; border-radius: 14px; font-size: 0.9rem; cursor: pointer; font-weight: 600; }
-    
-    .history-card { margin-top: 2rem; border-top: 2px solid #f0f2f5; padding-top: 1.5rem; }
     .history-item { padding: 14px 0; border-bottom: 1px solid #f0f2f5; display: flex; justify-content: space-between; align-items: center; }
     .history-details { display: flex; flex-direction: column; gap: 2px; }
     .history-price { font-weight: 800; color: #1c1e21; font-size: 1rem; }
-    
+
     select { flex: 1; padding: 0.8rem; border-radius: 12px; border: 2px solid #e4e6eb; background: white; font-size: 1rem; outline: none; }
-    .view-btn { padding: 0.8rem 1.5rem; background: #1a73e8; color: white; border: none; border-radius: 12px; cursor: pointer; font-weight: 600; }
+    .view-btn { padding: 0.8rem 1.5rem; background: #1a73e8; color: white; border: none; border-radius: 12px; cursor: pointer; font-weight: 600; transition: transform 0.15s ease; }
+    .view-btn:active { transform: scale(0.95); }
+
+    .toast {
+      position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px);
+      padding: 12px 24px; border-radius: 50px; font-size: 0.85rem; font-weight: 600;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 1000; opacity: 0;
+      transition: transform 0.3s ease, opacity 0.3s ease; white-space: nowrap;
+    }
+    .toast.visible { transform: translateX(-50%) translateY(0); opacity: 1; }
+    .toast.t-success { background: #e6f4ea; color: #137333; }
+    .toast.t-error { background: #fce8e6; color: #c5221f; }
+    .toast.t-info { background: #e8f0fe; color: #1967d2; }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>💳 Expense Tracker</h1>
+    <h1>Expense Tracker</h1>
 
-    <button class="settings-toggle" onclick="document.getElementById('configPanel').toggleAttribute('hidden')">⚙️ GEMINI SETUP</button>
+    <button class="settings-toggle" onclick="document.getElementById('configPanel').toggleAttribute('hidden')">SETTINGS</button>
 
     <div class="config-section" id="configPanel" hidden>
-      <label style="font-size:0.75rem; font-weight:bold; color:#555;">Gemini API Key</label>
+      <label style="font-size:0.75rem; font-weight:bold; color:#555;">Apps Script URL</label>
+      <input type="text" id="urlInput" placeholder="Web App URL">
+      <label style="font-size:0.75rem; font-weight:bold; color:#555; margin-top:8px;">Gemini API Key</label>
       <input type="password" id="keyInput" placeholder="AI Key for Scanning">
-      <button onclick="saveAIKey()">Save API Key</button>
+      <button onclick="saveConfig()">Save Settings</button>
     </div>
 
-    <div class="manual-input-container">
-      <button id="scanBtn" class="action-btn" onclick="document.getElementById('fileIn').click()">📷</button>
-      <input type="file" id="fileIn" accept="image/*" capture="environment" style="display:none">
-      
-      <input type="text" id="manualInput" placeholder="Store Price Card Date" spellcheck="false" autocomplete="off">
-      <button id="submitBtn" class="action-btn">📤</button>
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab('log')">Log</button>
+      <button class="tab-btn" onclick="switchTab('reconcile')">Reconcile</button>
     </div>
 
-    <div class="example-chips">
-      <div class="example-chip" onclick="fill('Citi')">Citi</div>
-      <div class="example-chip" onclick="fill('Discover')">Discover</div>
-      <div class="example-chip" onclick="fill('GreenState')">GreenState</div>
-      <div class="example-chip" onclick="fill('Costco')">Costco</div>
-      <div class="example-chip" onclick="fill('Yesterday')">Yesterday</div>
+    <div id="tab-log" class="tab-content active">
+      <div class="manual-input-container">
+        <button id="scanBtn" class="action-btn" onclick="document.getElementById('fileIn').click()">📷</button>
+        <input type="file" id="fileIn" accept="image/*" capture="environment" style="display:none">
+        <input type="text" id="manualInput" placeholder="Store Price Card Date" spellcheck="false" autocomplete="off">
+        <button id="submitBtn" class="action-btn">📤</button>
+      </div>
+
+      <div class="chip-group">
+        <div class="chip-label">Card</div>
+        <div class="chip-row">
+          <div class="example-chip" onclick="fill('Citi')">Citi</div>
+          <div class="example-chip" onclick="fill('Discover')">Discover</div>
+          <div class="example-chip" onclick="fill('GreenState')">GreenState</div>
+          <div class="example-chip" onclick="fill('Costco')">Costco</div>
+        </div>
+      </div>
+      <div class="chip-group">
+        <div class="chip-label">Quick</div>
+        <div class="chip-row">
+          <div class="example-chip" onclick="fill('Yesterday')">Yesterday</div>
+        </div>
+      </div>
+
+      <button onclick="deleteLast()" class="btn-delete">Undo Last Entry</button>
     </div>
 
-    <div id="status"></div>
-
-    <button onclick="deleteLast()" class="btn-delete">Undo Last Entry</button>
-
-    <div class="history-card">
-      <h3 style="font-size: 1rem; margin-bottom: 1rem; color: #65676b;">Reconcile Records</h3>
+    <div id="tab-reconcile" class="tab-content">
       <div style="display: flex; gap: 10px; margin-bottom: 1.25rem;">
         <select id="cardFilter">
           <option value="Citi">Citi</option>
@@ -104,95 +134,117 @@
       </div>
       <div id="historyList"></div>
     </div>
-    
-    <div style="text-align: center; margin-top: 2rem; font-size: 0.7rem; color: #bdc3c7; font-weight: 600;">V2.0.0 • HYBRID COGNITION ENGINE</div>
+
+    <div style="text-align: center; margin-top: 2rem; font-size: 0.7rem; color: #bdc3c7; font-weight: 600;">V3.2.0</div>
   </div>
+
+  <div id="toast" class="toast"></div>
 
   <script type="module">
     import { GoogleGenerativeAI } from "@google/generative-ai";
 
-    // 1. HARDCODE YOUR SCRIPT URL HERE
-    const CONFIG = { WEB_APP_URL: "https://script.google.com/macros/s/AKfycbxy2OhLXzjmz1JJLU6RgCzKUP78WL4jJ29tQNX6l3AhgIousJKZ7WwbAvXrpiZkHOKc/exec" };
-    
+    function getScriptUrl() { return localStorage.getItem('script_url') || ''; }
+
     const elements = {
       manualInput: document.getElementById("manualInput"),
       submitBtn: document.getElementById("submitBtn"),
-      status: document.getElementById("status"),
       historyList: document.getElementById("historyList"),
       fileIn: document.getElementById("fileIn"),
-      keyInput: document.getElementById("keyInput")
+      keyInput: document.getElementById("keyInput"),
+      urlInput: document.getElementById("urlInput")
     };
 
-    // Load Saved Gemini Key if available
     elements.keyInput.value = localStorage.getItem('gemini_key') || '';
+    elements.urlInput.value = localStorage.getItem('script_url') || '';
 
-    window.saveAIKey = () => {
+    if (!getScriptUrl()) {
+      document.getElementById('configPanel').removeAttribute('hidden');
+    }
+
+    function showToast(msg, type) {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.className = 'toast t-' + type;
+      requestAnimationFrame(() => { toast.classList.add('visible'); });
+      setTimeout(() => { toast.classList.remove('visible'); }, 3500);
+    }
+
+    window.saveConfig = () => {
+      localStorage.setItem('script_url', elements.urlInput.value.trim());
       localStorage.setItem('gemini_key', elements.keyInput.value.trim());
-      showStatus("✅ API Key Saved", "success");
+      showToast("Settings Saved", "success");
       setTimeout(() => document.getElementById('configPanel').setAttribute('hidden', ''), 1000);
     };
 
-    window.fill = (val) => { 
-      elements.manualInput.value += (elements.manualInput.value ? " " : "") + val; 
-      elements.manualInput.focus(); 
+    window.switchTab = (tab) => {
+      document.querySelectorAll('.tab-btn').forEach((btn, i) => {
+        btn.classList.toggle('active', (i === 0 && tab === 'log') || (i === 1 && tab === 'reconcile'));
+      });
+      document.getElementById('tab-log').classList.toggle('active', tab === 'log');
+      document.getElementById('tab-reconcile').classList.toggle('active', tab === 'reconcile');
+    };
+
+    async function fetchWithRetry(url, opts = {}) {
+      try { return await fetch(url, opts); }
+      catch (e) { await new Promise(r => setTimeout(r, 2000)); return await fetch(url, opts); }
     }
 
-    function showStatus(msg, type) {
-      elements.status.textContent = msg;
-      elements.status.className = type;
-      if (type !== 'sending') setTimeout(() => elements.status.className = '', 4000);
+    window.fill = (val) => {
+      elements.manualInput.value += (elements.manualInput.value ? " " : "") + val;
+      elements.manualInput.focus();
     }
 
-// 2. RECEIPT CAMERA SCANNER LOGIC (Updated to focus only on Store, Price, and Date)
     elements.fileIn.onchange = async (e) => {
-      const file = e.target.files[0]; 
+      const file = e.target.files[0];
       if (!file) return;
-      
+
       const apiKey = localStorage.getItem('gemini_key');
       if (!apiKey) {
-        showStatus("⚠️ Please configure your Gemini API Key first!", "error");
+        showToast("Configure your Gemini API Key first!", "error");
         document.getElementById('configPanel').removeAttribute('hidden');
         return;
       }
 
-      showStatus("⏳ Gemini is scanning receipt...", "sending");
-      
+      showToast("Scanning receipt...", "info");
+
       const reader = new FileReader();
       reader.onloadend = async () => {
         try {
           const genAI = new GoogleGenerativeAI(apiKey);
-          const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash" });
-          
-          // Tightened prompt focusing ONLY on Store, Amount, and Date
+          const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+
           const prompt = "Analyze this receipt image. Extract the store name, the absolute final grand total parameter, and the transaction date. Output ONLY a clean single-line conversational string formatted strictly like this template: [StoreName] $[Amount] [Month Day] (Example output string: 'Target $42.50 May 12th'). Do not attempt to guess or extract the payment method or credit card name. Do not include markdown code blocks or formatting.";
-          
+
           const result = await model.generateContent([prompt, { inlineData: { data: reader.result.split(',')[1], mimeType: "image/jpeg" } }]);
           const parsedCommand = result.response.text().trim().replace(/`/g, "");
 
           if (parsedCommand) {
             elements.manualInput.value = parsedCommand;
-            showStatus("✨ Scan Loaded! Tap a card chip if needed, then send.", "success");
+            showToast("Scan loaded! Add card, then send.", "success");
           } else {
-            showStatus("❌ Couldn't parse receipt text clearly.", "error");
+            showToast("Couldn't parse receipt clearly.", "error");
           }
-        } catch (err) { 
-          showStatus("❌ Scanning error: " + err.message, "error"); 
+        } catch (err) {
+          showToast("Scan error: " + err.message, "error");
         }
       };
       reader.readAsDataURL(file);
     };
-    
+
     async function submitExpense(command) {
       if (!command) return;
-      showStatus("Sending to Sheet...", "sending");
+      showToast("Sending to Sheet...", "info");
       try {
-        await fetch(CONFIG.WEB_APP_URL, {
-          method: "POST", mode: "no-cors",
-          body: new URLSearchParams({ 'command': command })
-        });
-        showStatus("✅ Saved successfully", "success");
-        elements.manualInput.value = "";
-      } catch (err) { showStatus("❌ Error connecting", "error"); }
+        const params = new URLSearchParams({ action: "add", command: command });
+        const response = await fetchWithRetry(getScriptUrl() + "?" + params);
+        const data = await response.json();
+        if (data.error) {
+          showToast("Error: " + data.error, "error");
+        } else {
+          showToast(data.parsed.store + " $" + data.parsed.price + " (" + data.parsed.card + ")", "success");
+          elements.manualInput.value = "";
+        }
+      } catch (err) { showToast("Connection error", "error"); }
     }
 
     elements.manualInput.addEventListener("keypress", (e) => { if (e.key === "Enter") elements.submitBtn.click(); });
@@ -200,40 +252,99 @@
 
     window.deleteLast = async () => {
       if (confirm("Delete the most recent entry?")) {
-        showStatus("Deleting...", "sending");
-        await fetch(`${CONFIG.WEB_APP_URL}?action=deleteLast`);
-        showStatus("🗑️ Entry deleted", "success");
-        if (elements.historyList.innerHTML !== "") window.fetchHistory();
+        showToast("Deleting...", "info");
+        try {
+          const response = await fetchWithRetry(getScriptUrl() + "?action=deleteLast");
+          const data = await response.json();
+          if (data.error) {
+            showToast("Error: " + data.error, "error");
+          } else {
+            showToast("Entry deleted", "success");
+            if (elements.historyList.children.length > 0) window.fetchHistory();
+          }
+        } catch (err) { showToast("Connection error", "error"); }
       }
     }
 
     window.fetchHistory = async () => {
       const card = document.getElementById('cardFilter').value;
-      elements.historyList.innerHTML = "<p style='padding:10px; font-size:0.9rem; color:#65676b;'>Searching...</p>";
+      elements.historyList.textContent = "";
+      const loading = document.createElement('p');
+      loading.style.cssText = "padding:10px; font-size:0.9rem; color:#65676b;";
+      loading.textContent = "Searching...";
+      elements.historyList.appendChild(loading);
+
       try {
-        const res = await fetch(`${CONFIG.WEB_APP_URL}?card=${card}`);
+        const res = await fetchWithRetry(getScriptUrl() + "?card=" + encodeURIComponent(card));
         const data = await res.json();
+        elements.historyList.textContent = "";
+
+        if (data.error) {
+          const errP = document.createElement('p');
+          errP.style.cssText = "padding:10px; color:#c5221f;";
+          errP.textContent = data.error;
+          elements.historyList.appendChild(errP);
+          return;
+        }
+
         if (data.entries && data.entries.length > 0) {
-          elements.historyList.innerHTML = data.entries.map(e => `
-            <div class="history-item">
-              <div class="history-details">
-                <span style="font-weight:700; font-size:0.95rem;">${e.where}</span>
-                <span style="font-size:0.75rem; color:#8a8d91;">${e.when}</span>
-              </div>
-              <div style="display:flex; align-items:center; gap:12px;">
-                <span class="history-price">$${parseFloat(e.price).toFixed(2)}</span>
-                <button onclick="reconcileItem(${e.index})" style="background:#e7f3ff; color:#1a73e8; border:none; width:34px; height:34px; border-radius:50%; cursor:pointer; font-size:1rem;">✓</button>
-              </div>
-            </div>
-          `).join('');
-        } else { elements.historyList.innerHTML = "<p style='padding:10px; color:#65676b;'>No items found.</p>"; }
-      } catch (e) { elements.historyList.innerHTML = "<p style='padding:10px; color:#c5221f;'>Fetch failed.</p>"; }
+          data.entries.forEach(entry => {
+            const div = document.createElement('div');
+            div.className = 'history-item';
+
+            const details = document.createElement('div');
+            details.className = 'history-details';
+            const storeName = document.createElement('span');
+            storeName.style.cssText = "font-weight:700; font-size:0.95rem;";
+            storeName.textContent = entry.where;
+            const dateSpan = document.createElement('span');
+            dateSpan.style.cssText = "font-size:0.75rem; color:#8a8d91;";
+            dateSpan.textContent = entry.when;
+            details.appendChild(storeName);
+            details.appendChild(dateSpan);
+
+            const controls = document.createElement('div');
+            controls.style.cssText = "display:flex; align-items:center; gap:12px;";
+            const price = document.createElement('span');
+            price.className = 'history-price';
+            price.textContent = "$" + parseFloat(entry.price).toFixed(2);
+            const btn = document.createElement('button');
+            btn.style.cssText = "background:#e7f3ff; color:#1a73e8; border:none; width:34px; height:34px; border-radius:50%; cursor:pointer; font-size:1rem; transition: transform 0.15s ease;";
+            btn.textContent = "✓";
+            btn.onclick = () => reconcileItem(entry.index);
+            controls.appendChild(price);
+            controls.appendChild(btn);
+
+            div.appendChild(details);
+            div.appendChild(controls);
+            elements.historyList.appendChild(div);
+          });
+        } else {
+          const empty = document.createElement('p');
+          empty.style.cssText = "padding:10px; color:#65676b;";
+          empty.textContent = "No items found.";
+          elements.historyList.appendChild(empty);
+        }
+      } catch (e) {
+        elements.historyList.textContent = "";
+        const errP = document.createElement('p');
+        errP.style.cssText = "padding:10px; color:#c5221f;";
+        errP.textContent = "Fetch failed.";
+        elements.historyList.appendChild(errP);
+      }
     }
 
-    window.reconcileItem = async (index) => {
+    async function reconcileItem(index) {
       if (confirm("Remove this item?")) {
-        await fetch(`${CONFIG.WEB_APP_URL}?action=deleteSpecific&index=${index}`);
-        window.fetchHistory();
+        try {
+          const response = await fetchWithRetry(getScriptUrl() + "?action=deleteSpecific&index=" + index);
+          const data = await response.json();
+          if (data.error) {
+            showToast("Error: " + data.error, "error");
+          } else {
+            window.fetchHistory();
+          }
+        } catch (err) { showToast("Connection error", "error"); }
       }
     }
   </script>
