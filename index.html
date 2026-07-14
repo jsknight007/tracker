@@ -7,60 +7,74 @@
   <link rel="manifest" href="manifest.json">
   <script type="importmap"> { "imports": { "@google/generative-ai": "https://esm.run/@google/generative-ai@0.21.0" } } </script>
   <style>
+    :root { --accent: #1a73e8; --bg: #f0f2f5; --bg-gradient-start: #f0f2f5; --bg-gradient-end: #e2e8f0; --card-bg: white; --text: #1c1e21; --border: #e4e6eb; --muted: #64748b; --input-bg: #f9f9f9; --chip-bg: #e8f0fe; --chip-text: #1967d2; --chip-border: #d2e3fc; --danger-bg: #fff5f5; --danger-text: #c5221f; --danger-border: #ffdada; }
+    [data-theme="dark"] { --accent: #60a5fa; --bg: #0f172a; --bg-gradient-start: #0f172a; --bg-gradient-end: #1e293b; --card-bg: #1e293b; --text: #f1f5f9; --border: #334155; --muted: #94a3b8; --input-bg: #334155; --chip-bg: #1e3a5f; --chip-text: #93c5fd; --chip-border: #2563eb; --danger-bg: #3b1111; --danger-text: #fca5a5; --danger-border: #7f1d1d; }
     * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 1rem; background: linear-gradient(135deg, #f0f2f5 0%, #e2e8f0 100%); color: #1c1e21; min-height: 100vh; }
-    .container { background: white; padding: 1.5rem; border-radius: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.06); width: 100%; overflow: hidden; }
-    h1 { margin-bottom: 1rem; color: #1a73e8; font-size: 1.4rem; text-align: center; font-weight: 800; letter-spacing: -0.5px; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 1rem; background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%); color: var(--text); min-height: 100vh; transition: background 0.3s, color 0.3s; }
+    .container { background: var(--card-bg); padding: 1.5rem; border-radius: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.06); width: 100%; overflow: hidden; border: 1px solid var(--border); transition: background 0.3s, border-color 0.3s; }
+    h1 { margin-bottom: 1rem; color: var(--accent); font-size: 1.4rem; text-align: center; font-weight: 800; letter-spacing: -0.5px; }
 
-    .settings-toggle { background: #f1f5f9; border: none; color: #64748b; font-size: 0.75rem; padding: 6px 12px; border-radius: 8px; font-weight: 600; display: block; margin: 0 auto 1rem auto; cursor: pointer; transition: transform 0.15s ease; }
+    .header-row { display: flex; justify-content: center; align-items: center; gap: 8px; margin-bottom: 1rem; }
+    .settings-toggle { background: var(--input-bg); border: 1px solid var(--border); color: var(--muted); font-size: 0.75rem; padding: 6px 12px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: transform 0.15s ease; }
     .settings-toggle:active { transform: scale(0.95); }
-    .config-section { background: #fff9c4; border: 1px solid #fbc02d; padding: 1rem; border-radius: 12px; margin-bottom: 1.5rem; text-align: left; }
-    .config-section input { width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 8px; margin-top: 4px; font-size: 0.9rem; }
-    .config-section button { width: 100%; padding: 0.75rem; background: #fbc02d; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 8px; }
+    .theme-btn { background: var(--input-bg); border: 1px solid var(--border); color: var(--muted); font-size: 1rem; padding: 4px 10px; border-radius: 8px; cursor: pointer; transition: transform 0.15s ease; line-height: 1; }
+    .theme-btn:active { transform: scale(0.9); }
 
-    .tab-bar { display: flex; background: #f1f5f9; border-radius: 12px; padding: 4px; margin-bottom: 1.5rem; }
-    .tab-btn { flex: 1; padding: 10px; border: none; border-radius: 10px; font-size: 0.85rem; font-weight: 700; cursor: pointer; background: transparent; color: #64748b; transition: all 0.2s ease; }
-    .tab-btn.active { background: white; color: #1a73e8; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+    .config-section { background: var(--chip-bg); border: 1px solid var(--chip-border); padding: 1rem; border-radius: 12px; margin-bottom: 1.5rem; text-align: left; }
+    .config-section label { font-size: 0.75rem; font-weight: bold; color: var(--muted); display: block; margin-top: 8px; }
+    .config-section label:first-child { margin-top: 0; }
+    .config-section input { width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; margin-top: 4px; font-size: 0.9rem; background: var(--input-bg); color: var(--text); }
+    .config-section button { width: 100%; padding: 0.75rem; background: var(--accent); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+
+    .tab-bar { display: flex; background: var(--input-bg); border-radius: 12px; padding: 4px; margin-bottom: 1.5rem; border: 1px solid var(--border); }
+    .tab-btn { flex: 1; padding: 10px; border: none; border-radius: 10px; font-size: 0.85rem; font-weight: 700; cursor: pointer; background: transparent; color: var(--muted); transition: all 0.2s ease; }
+    .tab-btn.active { background: var(--card-bg); color: var(--accent); box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
 
     .tab-content { display: none; }
     .tab-content.active { display: block; }
 
     .manual-input-container { display: flex; gap: 0.5rem; width: 100%; align-items: center; margin-bottom: 1rem; }
     #manualInput {
-      flex: 1; min-width: 0; padding: 1.1rem; border: 2px solid #e4e6eb; border-radius: 14px;
-      font-size: 1.1rem; outline: none; transition: border-color 0.2s; background: #f9f9f9;
+      flex: 1; min-width: 0; padding: 1.1rem; border: 2px solid var(--border); border-radius: 14px;
+      font-size: 1.1rem; outline: none; transition: border-color 0.3s, box-shadow 0.3s; background: var(--input-bg); color: var(--text);
     }
-    #manualInput:focus { border-color: #1a73e8; background: white; }
+    #manualInput:focus { border-color: var(--accent); background: var(--card-bg); }
+    #manualInput.scan-pulse { animation: scan-glow 1s ease-out; }
+    @keyframes scan-glow { 0% { border-color: #10b981; box-shadow: 0 0 12px rgba(16,185,129,0.4); } 100% { border-color: var(--border); box-shadow: none; } }
 
     .action-btn {
       width: 54px; height: 54px; border: none; border-radius: 14px; cursor: pointer;
       font-size: 1.4rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      transition: transform 0.15s ease, box-shadow 0.15s ease; position: relative;
     }
     .action-btn:active { transform: scale(0.92); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-    #scanBtn { background: #e8f0fe; color: #1a73e8; border: 1px solid #d2e3fc; }
-    #submitBtn { background: #1a73e8; color: white; }
+    #scanBtn { background: var(--chip-bg); color: var(--accent); border: 1px solid var(--chip-border); }
+    #submitBtn { background: var(--accent); color: white; }
+    .queue-badge { position: absolute; top: -4px; right: -4px; background: #ef4444; color: white; font-size: 0.6rem; font-weight: 700; padding: 2px 5px; border-radius: 10px; min-width: 16px; text-align: center; display: none; }
 
     .chip-group { margin-bottom: 1rem; }
-    .chip-label { font-size: 0.6rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; padding-left: 4px; }
+    .chip-label { font-size: 0.6rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; padding-left: 4px; }
     .chip-row { display: flex; flex-wrap: wrap; gap: 6px; }
     .example-chip {
-      padding: 0.6rem 0.9rem; background: #e8f0fe; border: 1px solid #d2e3fc;
-      border-radius: 12px; font-size: 0.85rem; color: #1967d2; cursor: pointer;
+      padding: 0.6rem 0.9rem; background: var(--chip-bg); border: 1px solid var(--chip-border);
+      border-radius: 12px; font-size: 0.85rem; color: var(--chip-text); cursor: pointer;
       font-weight: 600; transition: transform 0.15s ease;
     }
-    .example-chip:active { background: #d2e3fc; transform: translateY(1px); }
+    .example-chip:active { transform: translateY(1px); }
 
-    .btn-delete { width: 100%; margin: 1rem 0 0 0; padding: 0.9rem; background: #fff5f5; color: #c5221f; border: 1px solid #ffdada; border-radius: 14px; font-size: 0.9rem; cursor: pointer; font-weight: 600; transition: transform 0.15s ease; }
+    .btn-delete { width: 100%; margin: 1rem 0 0 0; padding: 0.9rem; background: var(--danger-bg); color: var(--danger-text); border: 1px solid var(--danger-border); border-radius: 14px; font-size: 0.9rem; cursor: pointer; font-weight: 600; transition: transform 0.15s ease; }
     .btn-delete:active { transform: scale(0.95); }
 
-    .history-item { padding: 14px 0; border-bottom: 1px solid #f0f2f5; display: flex; justify-content: space-between; align-items: center; }
+    .history-item { padding: 14px 0; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
     .history-details { display: flex; flex-direction: column; gap: 2px; }
-    .history-price { font-weight: 800; color: #1c1e21; font-size: 1rem; }
+    .history-price { font-weight: 800; color: var(--text); font-size: 1rem; }
 
-    select { flex: 1; padding: 0.8rem; border-radius: 12px; border: 2px solid #e4e6eb; background: white; font-size: 1rem; outline: none; }
-    .view-btn { padding: 0.8rem 1.5rem; background: #1a73e8; color: white; border: none; border-radius: 12px; cursor: pointer; font-weight: 600; transition: transform 0.15s ease; }
+    select { flex: 1; padding: 0.8rem; border-radius: 12px; border: 2px solid var(--border); background: var(--input-bg); color: var(--text); font-size: 1rem; outline: none; }
+    .view-btn { padding: 0.8rem 1.5rem; background: var(--accent); color: white; border: none; border-radius: 12px; cursor: pointer; font-weight: 600; transition: transform 0.15s ease; }
     .view-btn:active { transform: scale(0.95); }
+
+    .queue-banner { background: #fef3cd; border: 1px solid #ffc107; border-radius: 12px; padding: 10px 14px; margin-bottom: 1rem; font-size: 0.8rem; font-weight: 600; color: #856404; display: none; text-align: center; }
+    [data-theme="dark"] .queue-banner { background: #3d2e00; border-color: #ffc107; color: #ffc107; }
 
     .toast {
       position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px);
@@ -78,15 +92,22 @@
   <div class="container">
     <h1>Expense Tracker</h1>
 
-    <button class="settings-toggle" onclick="document.getElementById('configPanel').toggleAttribute('hidden')">SETTINGS</button>
+    <div class="header-row">
+      <button class="theme-btn" id="themeToggle" onclick="toggleTheme()"></button>
+      <button class="settings-toggle" onclick="document.getElementById('configPanel').toggleAttribute('hidden')">SETTINGS</button>
+    </div>
 
     <div class="config-section" id="configPanel" hidden>
-      <label style="font-size:0.75rem; font-weight:bold; color:#555;">Apps Script URL</label>
+      <label>Apps Script URL</label>
       <input type="text" id="urlInput" placeholder="Web App URL">
-      <label style="font-size:0.75rem; font-weight:bold; color:#555; margin-top:8px;">Gemini API Key</label>
+      <label>Gemini API Key</label>
       <input type="password" id="keyInput" placeholder="AI Key for Scanning">
+      <label>Cards (comma-separated)</label>
+      <input type="text" id="cardsInput" placeholder="Citi,Discover,GreenState,Costco">
       <button onclick="saveConfig()">Save Settings</button>
     </div>
+
+    <div id="queueBanner" class="queue-banner"></div>
 
     <div class="tab-bar">
       <button class="tab-btn active" onclick="switchTab('log')">Log</button>
@@ -98,17 +119,12 @@
         <button id="scanBtn" class="action-btn" onclick="document.getElementById('fileIn').click()">📷</button>
         <input type="file" id="fileIn" accept="image/*" capture="environment" style="display:none">
         <input type="text" id="manualInput" placeholder="Store Price Card Date" spellcheck="false" autocomplete="off">
-        <button id="submitBtn" class="action-btn">📤</button>
+        <button id="submitBtn" class="action-btn">📤<span class="queue-badge" id="queueBadge"></span></button>
       </div>
 
       <div class="chip-group">
         <div class="chip-label">Card</div>
-        <div class="chip-row">
-          <div class="example-chip" onclick="fill('Citi')">Citi</div>
-          <div class="example-chip" onclick="fill('Discover')">Discover</div>
-          <div class="example-chip" onclick="fill('GreenState')">GreenState</div>
-          <div class="example-chip" onclick="fill('Costco')">Costco</div>
-        </div>
+        <div class="chip-row" id="cardChips"></div>
       </div>
       <div class="chip-group">
         <div class="chip-label">Quick</div>
@@ -122,20 +138,13 @@
 
     <div id="tab-reconcile" class="tab-content">
       <div style="display: flex; gap: 10px; margin-bottom: 1.25rem;">
-        <select id="cardFilter">
-          <option value="Citi">Citi</option>
-          <option value="GreenState">GreenState</option>
-          <option value="Discover">Discover</option>
-          <option value="Costco">Costco</option>
-          <option value="Verizon">Verizon</option>
-          <option value="Other">Other</option>
-        </select>
+        <select id="cardFilter"></select>
         <button onclick="fetchHistory()" class="view-btn">View</button>
       </div>
       <div id="historyList"></div>
     </div>
 
-    <div style="text-align: center; margin-top: 2rem; font-size: 0.7rem; color: #bdc3c7; font-weight: 600;">V3.2.0</div>
+    <div style="text-align: center; margin-top: 2rem; font-size: 0.7rem; color: var(--muted); font-weight: 600;">V4.0.0</div>
   </div>
 
   <div id="toast" class="toast"></div>
@@ -143,6 +152,97 @@
   <script type="module">
     import { GoogleGenerativeAI } from "@google/generative-ai";
 
+    // --- Theme ---
+    function applyTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      document.getElementById('themeToggle').textContent = theme === 'dark' ? '☀️' : '🌙';
+      localStorage.setItem('theme', theme);
+    }
+    window.toggleTheme = () => {
+      const current = localStorage.getItem('theme') || 'light';
+      applyTheme(current === 'dark' ? 'light' : 'dark');
+    };
+    applyTheme(localStorage.getItem('theme') || 'light');
+
+    // --- Cards ---
+    function getCards() {
+      const stored = localStorage.getItem('cards');
+      if (stored && stored.trim()) return stored.split(',').map(c => c.trim()).filter(Boolean);
+      return ['Citi', 'Discover', 'GreenState', 'Costco'];
+    }
+    function renderCards() {
+      const cards = getCards();
+      const chipRow = document.getElementById('cardChips');
+      chipRow.innerHTML = '';
+      cards.forEach(card => {
+        const chip = document.createElement('div');
+        chip.className = 'example-chip';
+        chip.textContent = card;
+        chip.onclick = () => fill(card);
+        chipRow.appendChild(chip);
+      });
+      const select = document.getElementById('cardFilter');
+      select.innerHTML = '';
+      cards.forEach(card => {
+        const opt = document.createElement('option');
+        opt.value = card;
+        opt.textContent = card;
+        select.appendChild(opt);
+      });
+      const otherOpt = document.createElement('option');
+      otherOpt.value = 'Other';
+      otherOpt.textContent = 'Other';
+      select.appendChild(otherOpt);
+    }
+
+    // --- Offline Queue ---
+    function getQueue() { try { return JSON.parse(localStorage.getItem('offline_queue') || '[]'); } catch { return []; } }
+    function saveQueue(q) { localStorage.setItem('offline_queue', JSON.stringify(q)); updateQueueUI(); }
+    function pushToQueue(type, params) {
+      const q = getQueue();
+      q.push({ type, params, ts: Date.now() });
+      saveQueue(q);
+      showToast("Saved offline — will sync later", "info");
+    }
+    function updateQueueUI() {
+      const q = getQueue();
+      const badge = document.getElementById('queueBadge');
+      const banner = document.getElementById('queueBanner');
+      if (q.length > 0) {
+        badge.textContent = q.length;
+        badge.style.display = 'block';
+        banner.textContent = q.length + ' pending action' + (q.length > 1 ? 's' : '') + ' queued offline';
+        banner.style.display = 'block';
+      } else {
+        badge.style.display = 'none';
+        banner.style.display = 'none';
+      }
+    }
+    async function flushQueue() {
+      const q = getQueue();
+      if (q.length === 0) return;
+      const remaining = [];
+      for (const item of q) {
+        try {
+          let url;
+          if (item.type === 'add') {
+            const params = new URLSearchParams({ action: 'add', command: item.params.command });
+            url = getScriptUrl() + '?' + params;
+          } else if (item.type === 'deleteLast') {
+            url = getScriptUrl() + '?action=deleteLast';
+          } else if (item.type === 'deleteSpecific') {
+            url = getScriptUrl() + '?action=deleteSpecific&index=' + item.params.index;
+          }
+          const resp = await fetch(url, { redirect: 'follow' });
+          const data = await resp.json();
+          if (data.error) remaining.push(item);
+        } catch { remaining.push(item); }
+      }
+      saveQueue(remaining);
+      if (remaining.length === 0 && q.length > 0) showToast("Offline queue synced!", "success");
+    }
+
+    // --- Config ---
     function getScriptUrl() { return localStorage.getItem('script_url') || ''; }
 
     const elements = {
@@ -151,15 +251,19 @@
       historyList: document.getElementById("historyList"),
       fileIn: document.getElementById("fileIn"),
       keyInput: document.getElementById("keyInput"),
-      urlInput: document.getElementById("urlInput")
+      urlInput: document.getElementById("urlInput"),
+      cardsInput: document.getElementById("cardsInput")
     };
 
     elements.keyInput.value = localStorage.getItem('gemini_key') || '';
     elements.urlInput.value = localStorage.getItem('script_url') || '';
+    elements.cardsInput.value = localStorage.getItem('cards') || 'Citi,Discover,GreenState,Costco';
 
-    if (!getScriptUrl()) {
-      document.getElementById('configPanel').removeAttribute('hidden');
-    }
+    if (!getScriptUrl()) document.getElementById('configPanel').removeAttribute('hidden');
+
+    renderCards();
+    updateQueueUI();
+    flushQueue();
 
     function showToast(msg, type) {
       const toast = document.getElementById('toast');
@@ -172,6 +276,8 @@
     window.saveConfig = () => {
       localStorage.setItem('script_url', elements.urlInput.value.trim());
       localStorage.setItem('gemini_key', elements.keyInput.value.trim());
+      localStorage.setItem('cards', elements.cardsInput.value.trim());
+      renderCards();
       showToast("Settings Saved", "success");
       setTimeout(() => document.getElementById('configPanel').setAttribute('hidden', ''), 1000);
     };
@@ -192,34 +298,30 @@
     window.fill = (val) => {
       elements.manualInput.value += (elements.manualInput.value ? " " : "") + val;
       elements.manualInput.focus();
-    }
+    };
 
     elements.fileIn.onchange = async (e) => {
       const file = e.target.files[0];
       if (!file) return;
-
       const apiKey = localStorage.getItem('gemini_key');
       if (!apiKey) {
         showToast("Configure your Gemini API Key first!", "error");
         document.getElementById('configPanel').removeAttribute('hidden');
         return;
       }
-
       showToast("Scanning receipt...", "info");
-
       const reader = new FileReader();
       reader.onloadend = async () => {
         try {
           const genAI = new GoogleGenerativeAI(apiKey);
           const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-
           const prompt = "Analyze this receipt image. Extract the store name, the absolute final grand total parameter, and the transaction date. Output ONLY a clean single-line conversational string formatted strictly like this template: [StoreName] $[Amount] [Month Day] (Example output string: 'Target $42.50 May 12th'). Do not attempt to guess or extract the payment method or credit card name. Do not include markdown code blocks or formatting.";
-
           const result = await model.generateContent([prompt, { inlineData: { data: reader.result.split(',')[1], mimeType: "image/jpeg" } }]);
           const parsedCommand = result.response.text().trim().replace(/`/g, "");
-
           if (parsedCommand) {
             elements.manualInput.value = parsedCommand;
+            elements.manualInput.classList.add('scan-pulse');
+            setTimeout(() => elements.manualInput.classList.remove('scan-pulse'), 1000);
             showToast("Scan loaded! Add card, then send.", "success");
           } else {
             showToast("Couldn't parse receipt clearly.", "error");
@@ -244,7 +346,9 @@
           showToast(data.parsed.store + " $" + data.parsed.price + " (" + data.parsed.card + ")", "success");
           elements.manualInput.value = "";
         }
-      } catch (err) { showToast("Connection error", "error"); }
+      } catch (err) {
+        pushToQueue('add', { command });
+      }
     }
 
     elements.manualInput.addEventListener("keypress", (e) => { if (e.key === "Enter") elements.submitBtn.click(); });
@@ -262,15 +366,17 @@
             showToast("Entry deleted", "success");
             if (elements.historyList.children.length > 0) window.fetchHistory();
           }
-        } catch (err) { showToast("Connection error", "error"); }
+        } catch (err) {
+          pushToQueue('deleteLast', {});
+        }
       }
-    }
+    };
 
     window.fetchHistory = async () => {
       const card = document.getElementById('cardFilter').value;
       elements.historyList.textContent = "";
       const loading = document.createElement('p');
-      loading.style.cssText = "padding:10px; font-size:0.9rem; color:#65676b;";
+      loading.style.cssText = "padding:10px; font-size:0.9rem; color:" + "var(--muted)" + ";";
       loading.textContent = "Searching...";
       elements.historyList.appendChild(loading);
 
@@ -291,37 +397,34 @@
           data.entries.forEach(entry => {
             const div = document.createElement('div');
             div.className = 'history-item';
-
             const details = document.createElement('div');
             details.className = 'history-details';
             const storeName = document.createElement('span');
             storeName.style.cssText = "font-weight:700; font-size:0.95rem;";
             storeName.textContent = entry.where;
             const dateSpan = document.createElement('span');
-            dateSpan.style.cssText = "font-size:0.75rem; color:#8a8d91;";
+            dateSpan.style.cssText = "font-size:0.75rem; color:var(--muted);";
             dateSpan.textContent = entry.when;
             details.appendChild(storeName);
             details.appendChild(dateSpan);
-
             const controls = document.createElement('div');
             controls.style.cssText = "display:flex; align-items:center; gap:12px;";
             const price = document.createElement('span');
             price.className = 'history-price';
             price.textContent = "$" + parseFloat(entry.price).toFixed(2);
             const btn = document.createElement('button');
-            btn.style.cssText = "background:#e7f3ff; color:#1a73e8; border:none; width:34px; height:34px; border-radius:50%; cursor:pointer; font-size:1rem; transition: transform 0.15s ease;";
+            btn.style.cssText = "background:var(--chip-bg); color:var(--accent); border:1px solid var(--chip-border); width:34px; height:34px; border-radius:50%; cursor:pointer; font-size:1rem; transition: transform 0.15s ease;";
             btn.textContent = "✓";
             btn.onclick = () => reconcileItem(entry.index);
             controls.appendChild(price);
             controls.appendChild(btn);
-
             div.appendChild(details);
             div.appendChild(controls);
             elements.historyList.appendChild(div);
           });
         } else {
           const empty = document.createElement('p');
-          empty.style.cssText = "padding:10px; color:#65676b;";
+          empty.style.cssText = "padding:10px; color:var(--muted);";
           empty.textContent = "No items found.";
           elements.historyList.appendChild(empty);
         }
@@ -332,7 +435,7 @@
         errP.textContent = "Fetch failed.";
         elements.historyList.appendChild(errP);
       }
-    }
+    };
 
     async function reconcileItem(index) {
       if (confirm("Remove this item?")) {
@@ -344,7 +447,9 @@
           } else {
             window.fetchHistory();
           }
-        } catch (err) { showToast("Connection error", "error"); }
+        } catch (err) {
+          pushToQueue('deleteSpecific', { index });
+        }
       }
     }
   </script>
