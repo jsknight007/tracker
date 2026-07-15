@@ -1,363 +1,470 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Parent Dashboard</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="theme-color" content="#2b7de9">
-    <link rel="manifest" href="manifest.json">
-    <style>
-        :root { --primary: #2b7de9; --bg: #f4f7f6; --bg-gradient-start: #f4f7f6; --bg-gradient-end: #e2e8f0; --card-bg: white; --text: #333; --border: #e4e6eb; --muted: #94a3b8; --input-bg: white; --filter-bg: #f1f5f9; --item-border: #f1f5f9; --btn-email: #6f42c1; }
-        [data-theme="dark"] { --primary: #60a5fa; --bg: #0f172a; --bg-gradient-start: #0f172a; --bg-gradient-end: #1e293b; --card-bg: #1e293b; --text: #f1f5f9; --border: #334155; --muted: #64748b; --input-bg: #334155; --filter-bg: #273549; --item-border: #334155; --btn-email: #8b5cf6; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 20px; max-width: 600px; margin: auto; background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%); min-height: 100vh; color: var(--text); transition: background 0.3s, color 0.3s; }
-        .card { background: var(--card-bg); padding: 20px; border-radius: 18px; box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.06); border: 1px solid var(--border); transition: background 0.3s, border-color 0.3s; }
-        h2, h3 { margin-top: 0; color: var(--text); }
-        input { width: 100%; padding: 14px; margin: 10px 0; box-sizing: border-box; border: 2px solid var(--border); border-radius: 12px; font-size: 16px; outline: none; transition: border-color 0.2s; background: var(--input-bg); color: var(--text); }
-        input:focus { border-color: var(--primary); }
-        .btn-main { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; font-size: 1rem; transition: transform 0.15s ease, box-shadow 0.15s ease; }
-        .btn-main:active { transform: scale(0.95); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-        .btn-email { background: var(--btn-email); color: white; border: none; border-radius: 12px; padding: 12px; width: 100%; font-weight: bold; cursor: pointer; margin-top: 12px; transition: transform 0.15s ease; }
-        .btn-email:active { transform: scale(0.95); }
-        .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .header-controls { display: flex; align-items: center; gap: 8px; }
-        .theme-btn { background: var(--filter-bg); border: 1px solid var(--border); color: var(--muted); font-size: 1rem; padding: 4px 10px; border-radius: 8px; cursor: pointer; transition: transform 0.15s ease; line-height: 1; }
-        .theme-btn:active { transform: scale(0.9); }
-        .filter-group { display: flex; flex-wrap: wrap; gap: 6px; margin: 20px 0; background: var(--filter-bg); padding: 6px; border-radius: 12px; border: 1px solid var(--border); }
-        .filter-btn { position: relative; flex: 1; min-width: 70px; padding: 10px 4px; border: none; border-radius: 10px; background: transparent; cursor: pointer; font-size: 0.75rem; font-weight: 700; color: var(--muted); transition: all 0.2s ease; }
-        .filter-btn.active { background: var(--card-bg); box-shadow: 0 2px 8px rgba(0,0,0,0.08); color: var(--primary); }
-        .filter-badge { position: absolute; top: -2px; right: 2px; background: var(--primary); color: white; font-size: 0.55rem; padding: 2px 5px; border-radius: 10px; font-weight: 700; min-width: 14px; text-align: center; }
-        .list-item { border-bottom: 1px solid var(--item-border); padding: 14px 0; list-style: none; display: flex; justify-content: space-between; align-items: center; }
-        .item-info { flex-grow: 1; margin-right: 10px; }
-        .item-controls { display: flex; gap: 8px; align-items: center; }
-        select { padding: 8px; border-radius: 8px; border: 1px solid var(--border); background: var(--input-bg); color: var(--text); font-size: 0.85rem; }
-        .btn-check { background: #10b981; color: white; border: none; border-radius: 8px; padding: 8px 12px; cursor: pointer; font-weight: bold; transition: transform 0.15s ease; }
-        .btn-check:active { transform: scale(0.9); }
-        .refresh-btn { background: none; border: none; font-size: 1.1rem; cursor: pointer; color: var(--muted); transition: transform 0.3s ease; position: relative; }
-        .refresh-btn.spinning { animation: spin 0.6s ease; }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
-        .queue-dot { position: absolute; top: -2px; right: -4px; width: 8px; height: 8px; background: #ef4444; border-radius: 50%; display: none; }
-        #setup-screen, #main-screen { display: none; }
-        .queue-banner { background: #fef3cd; border: 1px solid #ffc107; border-radius: 12px; padding: 10px 14px; margin-bottom: 12px; font-size: 0.8rem; font-weight: 600; color: #856404; display: none; text-align: center; }
-        [data-theme="dark"] .queue-banner { background: #3d2e00; border-color: #ffc107; color: #ffc107; }
-        .toast {
-            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px);
-            padding: 12px 24px; border-radius: 50px; font-size: 0.85rem; font-weight: 600;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 1000; opacity: 0;
-            transition: transform 0.3s ease, opacity 0.3s ease; white-space: nowrap;
-        }
-        .toast.visible { transform: translateX(-50%) translateY(0); opacity: 1; }
-        .toast.t-success { background: #e6f4ea; color: #137333; }
-        .toast.t-error { background: #fce8e6; color: #c5221f; }
-        .toast.t-info { background: #e8f0fe; color: #1967d2; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Expense Tracker Master</title>
+  <link rel="manifest" href="manifest.json">
+  <script type="importmap"> { "imports": { "@google/generative-ai": "https://esm.run/@google/generative-ai@0.21.0" } } </script>
+  <style>
+    :root { --accent: #1a73e8; --bg: #f0f2f5; --bg-gradient-start: #f0f2f5; --bg-gradient-end: #e2e8f0; --card-bg: white; --text: #1c1e21; --border: #e4e6eb; --muted: #64748b; --input-bg: #f9f9f9; --chip-bg: #e8f0fe; --chip-text: #1967d2; --chip-border: #d2e3fc; --danger-bg: #fff5f5; --danger-text: #c5221f; --danger-border: #ffdada; }
+    [data-theme="dark"] { --accent: #60a5fa; --bg: #0f172a; --bg-gradient-start: #0f172a; --bg-gradient-end: #1e293b; --card-bg: #1e293b; --text: #f1f5f9; --border: #334155; --muted: #94a3b8; --input-bg: #334155; --chip-bg: #1e3a5f; --chip-text: #93c5fd; --chip-border: #2563eb; --danger-bg: #3b1111; --danger-text: #fca5a5; --danger-border: #7f1d1d; }
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 1rem; background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%); color: var(--text); min-height: 100vh; transition: background 0.3s, color 0.3s; }
+    .container { background: var(--card-bg); padding: 1.5rem; border-radius: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.06); width: 100%; overflow: hidden; border: 1px solid var(--border); transition: background 0.3s, border-color 0.3s; }
+    h1 { margin-bottom: 1rem; color: var(--accent); font-size: 1.4rem; text-align: center; font-weight: 800; letter-spacing: -0.5px; }
+
+    .header-row { display: flex; justify-content: center; align-items: center; gap: 8px; margin-bottom: 1rem; }
+    .settings-toggle { background: var(--input-bg); border: 1px solid var(--border); color: var(--muted); font-size: 0.75rem; padding: 6px 12px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: transform 0.15s ease; }
+    .settings-toggle:active { transform: scale(0.95); }
+    .theme-btn { background: var(--input-bg); border: 1px solid var(--border); color: var(--muted); font-size: 1rem; padding: 4px 10px; border-radius: 8px; cursor: pointer; transition: transform 0.15s ease; line-height: 1; }
+    .theme-btn:active { transform: scale(0.9); }
+
+    .config-section { background: var(--chip-bg); border: 1px solid var(--chip-border); padding: 1rem; border-radius: 12px; margin-bottom: 1.5rem; text-align: left; }
+    .config-section label { font-size: 0.75rem; font-weight: bold; color: var(--muted); display: block; margin-top: 8px; }
+    .config-section label:first-child { margin-top: 0; }
+    .config-section input { width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; margin-top: 4px; font-size: 0.9rem; background: var(--input-bg); color: var(--text); }
+    .config-section button { width: 100%; padding: 0.75rem; background: var(--accent); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+
+    .tab-bar { display: flex; background: var(--input-bg); border-radius: 12px; padding: 4px; margin-bottom: 1.5rem; border: 1px solid var(--border); }
+    .tab-btn { flex: 1; padding: 10px; border: none; border-radius: 10px; font-size: 0.85rem; font-weight: 700; cursor: pointer; background: transparent; color: var(--muted); transition: all 0.2s ease; }
+    .tab-btn.active { background: var(--card-bg); color: var(--accent); box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    .manual-input-container { display: flex; gap: 0.5rem; width: 100%; align-items: center; margin-bottom: 1rem; }
+    #manualInput {
+      flex: 1; min-width: 0; padding: 1.1rem; border: 2px solid var(--border); border-radius: 14px;
+      font-size: 1.1rem; outline: none; transition: border-color 0.3s, box-shadow 0.3s; background: var(--input-bg); color: var(--text);
+    }
+    #manualInput:focus { border-color: var(--accent); background: var(--card-bg); }
+    #manualInput.scan-pulse { animation: scan-glow 1s ease-out; }
+    @keyframes scan-glow { 0% { border-color: #10b981; box-shadow: 0 0 12px rgba(16,185,129,0.4); } 100% { border-color: var(--border); box-shadow: none; } }
+
+    .action-btn {
+      width: 54px; height: 54px; border: none; border-radius: 14px; cursor: pointer;
+      font-size: 1.4rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+      transition: transform 0.15s ease, box-shadow 0.15s ease; position: relative;
+    }
+    .action-btn:active { transform: scale(0.92); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    #scanBtn { background: var(--chip-bg); color: var(--accent); border: 1px solid var(--chip-border); }
+    #submitBtn { background: var(--accent); color: white; }
+    .queue-badge { position: absolute; top: -4px; right: -4px; background: #ef4444; color: white; font-size: 0.6rem; font-weight: 700; padding: 2px 5px; border-radius: 10px; min-width: 16px; text-align: center; display: none; }
+
+    .chip-group { margin-bottom: 1rem; }
+    .chip-label { font-size: 0.6rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; padding-left: 4px; }
+    .chip-row { display: flex; flex-wrap: wrap; gap: 6px; }
+    .example-chip {
+      padding: 0.6rem 0.9rem; background: var(--chip-bg); border: 1px solid var(--chip-border);
+      border-radius: 12px; font-size: 0.85rem; color: var(--chip-text); cursor: pointer;
+      font-weight: 600; transition: transform 0.15s ease;
+    }
+    .example-chip:active { transform: translateY(1px); }
+
+    .btn-delete { width: 100%; margin: 1rem 0 0 0; padding: 0.9rem; background: var(--danger-bg); color: var(--danger-text); border: 1px solid var(--danger-border); border-radius: 14px; font-size: 0.9rem; cursor: pointer; font-weight: 600; transition: transform 0.15s ease; }
+    .btn-delete:active { transform: scale(0.95); }
+
+    .history-item { padding: 14px 0; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+    .history-details { display: flex; flex-direction: column; gap: 2px; }
+    .history-price { font-weight: 800; color: var(--text); font-size: 1rem; }
+
+    select { flex: 1; padding: 0.8rem; border-radius: 12px; border: 2px solid var(--border); background: var(--input-bg); color: var(--text); font-size: 1rem; outline: none; }
+    .view-btn { padding: 0.8rem 1.5rem; background: var(--accent); color: white; border: none; border-radius: 12px; cursor: pointer; font-weight: 600; transition: transform 0.15s ease; }
+    .view-btn:active { transform: scale(0.95); }
+
+    .queue-banner { background: #fef3cd; border: 1px solid #ffc107; border-radius: 12px; padding: 10px 14px; margin-bottom: 1rem; font-size: 0.8rem; font-weight: 600; color: #856404; display: none; text-align: center; }
+    [data-theme="dark"] .queue-banner { background: #3d2e00; border-color: #ffc107; color: #ffc107; }
+
+    .toast {
+      position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px);
+      padding: 12px 24px; border-radius: 50px; font-size: 0.85rem; font-weight: 600;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 1000; opacity: 0;
+      transition: transform 0.3s ease, opacity 0.3s ease; white-space: nowrap;
+    }
+    .toast.visible { transform: translateX(-50%) translateY(0); opacity: 1; }
+    .toast.t-success { background: #e6f4ea; color: #137333; }
+    .toast.t-error { background: #fce8e6; color: #c5221f; }
+    .toast.t-info { background: #e8f0fe; color: #1967d2; }
+  </style>
 </head>
 <body>
+  <div class="container">
+    <h1>Expense Tracker</h1>
 
-<div class="card">
-    <div id="setup-screen">
-        <h2>Welcome, Parent!</h2>
-        <p>Enter your name once to get started.</p>
-        <input type="text" id="parent-name" placeholder="Your Name">
-        <button class="btn-main" onclick="saveName()">Start Managing</button>
+    <div class="header-row">
+      <button class="theme-btn" id="themeToggle" onclick="toggleTheme()"></button>
+      <button class="settings-toggle" onclick="document.getElementById('configPanel').toggleAttribute('hidden')">SETTINGS</button>
     </div>
 
-    <div id="main-screen">
-        <div class="header-row">
-            <h2 id="greeting">Hi!</h2>
-            <div class="header-controls">
-                <button class="theme-btn" id="themeToggle" onclick="toggleTheme()"></button>
-                <button class="refresh-btn" id="refreshBtn" onclick="refreshList()">↻<span class="queue-dot" id="queueDot"></span></button>
-                <span onclick="clearName()" style="font-size: 0.7em; color: var(--muted); cursor: pointer;">(Logout)</span>
-            </div>
-        </div>
-
-        <div id="queueBanner" class="queue-banner"></div>
-
-        <input type="text" id="entry" placeholder="Add an item (e.g. Bread)" onkeydown="if(event.key === 'Enter') sendData()">
-        <button class="btn-main" onclick="sendData()">Add to List</button>
-
-        <div id="list-container" style="margin-top:20px;">
-            <h3>Current Needs</h3>
-            <div class="filter-group" id="filterGroup">
-                <button class="filter-btn active" data-filter="all" onclick="setFilter(this, 'all')">All</button>
-                <button class="filter-btn" data-filter="none" onclick="setFilter(this, 'none')">No Store</button>
-                <button class="filter-btn" data-filter="Hy-Vee" onclick="setFilter(this, 'Hy-Vee')">Hy-Vee</button>
-                <button class="filter-btn" data-filter="Fareway" onclick="setFilter(this, 'Fareway')">Fareway</button>
-                <button class="filter-btn" data-filter="Target" onclick="setFilter(this, 'Target')">Target</button>
-                <button class="filter-btn" data-filter="Wal-Mart" onclick="setFilter(this, 'Wal-Mart')">Wal-Mart</button>
-                <button class="filter-btn" data-filter="Costco" onclick="setFilter(this, 'Costco')">Costco</button>
-            </div>
-            <button class="btn-email" onclick="emailCurrentList()">Email This View</button>
-            <ul id="needs-list" style="padding: 0;"></ul>
-        </div>
+    <div class="config-section" id="configPanel" hidden>
+      <label>Apps Script URL</label>
+      <input type="text" id="urlInput" placeholder="Web App URL">
+      <label>Gemini API Key</label>
+      <input type="password" id="keyInput" placeholder="AI Key for Scanning">
+      <label>Cards (comma-separated)</label>
+      <input type="text" id="cardsInput" placeholder="Citi,Discover,GreenState,Costco">
+      <button onclick="saveConfig()">Save Settings</button>
     </div>
-</div>
 
-<div id="toast" class="toast"></div>
+    <div id="queueBanner" class="queue-banner"></div>
 
-<script>
-    function getScriptUrl() { return localStorage.getItem('sl_script_url') || ''; }
-    let currentData = [];
-    const STORES = ["Hy-Vee", "Fareway", "Target", "Wal-Mart", "Costco"];
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab('log')">Log</button>
+      <button class="tab-btn" onclick="switchTab('reconcile')">Reconcile</button>
+    </div>
 
-    // --- Theme ---
-    function applyTheme(theme) {
-        document.documentElement.setAttribute('data-theme', theme);
-        document.getElementById('themeToggle').textContent = theme === 'dark' ? '☀️' : '🌙';
-        localStorage.setItem('sl_theme', theme);
-    }
-    window.toggleTheme = function() {
-        var current = localStorage.getItem('sl_theme') || 'light';
-        applyTheme(current === 'dark' ? 'light' : 'dark');
-    };
-    applyTheme(localStorage.getItem('sl_theme') || 'light');
+    <div id="tab-log" class="tab-content active">
+      <div class="manual-input-container">
+        <button id="scanBtn" class="action-btn" onclick="document.getElementById('fileIn').click()">📷</button>
+        <input type="file" id="fileIn" accept="image/*" capture="environment" style="display:none">
+        <input type="text" id="manualInput" placeholder="Store Price Card Date" spellcheck="false" autocomplete="off">
+        <button id="submitBtn" class="action-btn">📤<span class="queue-badge" id="queueBadge"></span></button>
+      </div>
 
-    // --- Offline Queue ---
-    function getQueue() { try { return JSON.parse(localStorage.getItem('sl_offline_queue') || '[]'); } catch(e) { return []; } }
-    function saveQueueState(q) { localStorage.setItem('sl_offline_queue', JSON.stringify(q)); updateQueueUI(); }
-    function pushToQueue(action, params) {
-        var q = getQueue();
-        q.push({ action: action, params: params, ts: Date.now() });
-        saveQueueState(q);
-        showToast("Saved offline — will sync later", "info");
-    }
-    function updateQueueUI() {
-        var q = getQueue();
-        var dot = document.getElementById('queueDot');
-        var banner = document.getElementById('queueBanner');
-        if (q.length > 0) {
-            dot.style.display = 'block';
-            banner.textContent = q.length + ' pending action' + (q.length > 1 ? 's' : '') + ' queued offline';
-            banner.style.display = 'block';
-        } else {
-            dot.style.display = 'none';
-            banner.style.display = 'none';
-        }
-    }
-    async function flushQueue() {
-        var q = getQueue();
-        if (q.length === 0) return;
-        var remaining = [];
-        for (var i = 0; i < q.length; i++) {
-            var item = q[i];
-            try {
-                var url = getScriptUrl() + '?' + new URLSearchParams(item.params);
-                var resp = await fetch(url);
-                var data = await resp.json();
-                if (data.error) remaining.push(item);
-            } catch(e) { remaining.push(item); }
-        }
-        saveQueueState(remaining);
-        if (remaining.length === 0 && q.length > 0) showToast("Offline queue synced!", "success");
-    }
+      <div class="chip-group">
+        <div class="chip-label">Card</div>
+        <div class="chip-row" id="cardChips"></div>
+      </div>
+      <div class="chip-group">
+        <div class="chip-label">Quick</div>
+        <div class="chip-row">
+          <div class="example-chip" onclick="fill('Yesterday')">Yesterday</div>
+        </div>
+      </div>
 
-    async function fetchWithRetry(url, opts) {
-        opts = opts || {};
-        try { return await fetch(url, opts); }
-        catch (e) { await new Promise(function(r) { setTimeout(r, 2000); }); return await fetch(url, opts); }
-    }
+      <button onclick="deleteLast()" class="btn-delete">Undo Last Entry</button>
+    </div>
 
-    function showToast(msg, type) {
-        var toast = document.getElementById('toast');
-        toast.textContent = msg;
-        toast.className = 'toast t-' + type;
-        requestAnimationFrame(function() { toast.classList.add('visible'); });
-        setTimeout(function() { toast.classList.remove('visible'); }, 3500);
-    }
+    <div id="tab-reconcile" class="tab-content">
+      <div style="display: flex; gap: 10px; margin-bottom: 1.25rem;">
+        <select id="cardFilter"></select>
+        <button onclick="fetchHistory()" class="view-btn">View</button>
+      </div>
+      <div id="historyList"></div>
+    </div>
 
-    function updateBadges() {
-        var counts = { all: currentData.length, none: 0 };
-        STORES.forEach(function(s) { counts[s] = 0; });
-        currentData.forEach(function(e) {
-            if (!e.store) counts.none++;
-            else if (counts[e.store] !== undefined) counts[e.store]++;
+    <script>
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js');
+        navigator.serviceWorker.ready.then(function(reg) {
+            reg.active.postMessage('getVersion');
         });
-        document.querySelectorAll('.filter-btn').forEach(function(btn) {
-            var existing = btn.querySelector('.filter-badge');
-            if (existing) existing.remove();
-            var filter = btn.getAttribute('data-filter');
-            var count = counts[filter];
-            if (count > 0 && filter !== 'all') {
-                var badge = document.createElement('span');
-                badge.className = 'filter-badge';
-                badge.textContent = count;
-                btn.appendChild(badge);
+        navigator.serviceWorker.addEventListener('message', function(event) {
+            if (event.data.type === 'version') {
+                document.getElementById('app-version').textContent = 'V' + event.data.version;
             }
         });
     }
+    </script>
+    <div id="app-version" style="text-align: center; margin-top: 2rem; font-size: 0.7rem; color: var(--muted); font-weight: 600;">V4.1.0</div>
+  </div>
 
-    window.onload = function() {
-        if (!getScriptUrl()) {
-            document.getElementById('setup-screen').style.display = 'block';
-            document.getElementById('setup-screen').innerHTML = '<h2>Setup</h2><label style="font-size:0.8rem; font-weight:bold; color:var(--muted);">Apps Script URL</label><input type="text" id="url-cfg" placeholder="Paste your web app URL" style="margin-bottom:12px;"><button class="btn-main" onclick="localStorage.setItem(\'script_url\', document.getElementById(\'url-cfg\').value.trim()); location.reload();">Save & Continue</button>';
-            return;
-        }
-        var savedName = localStorage.getItem('sl_parentName');
-        if (savedName) showMain(savedName);
-        else document.getElementById('setup-screen').style.display = 'block';
+  <div id="toast" class="toast"></div>
+
+  <script type="module">
+    import { GoogleGenerativeAI } from "@google/generative-ai";
+
+    // --- Theme ---
+    function applyTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      document.getElementById('themeToggle').textContent = theme === 'dark' ? '☀️' : '🌙';
+      localStorage.setItem('et_theme', theme);
+    }
+    window.toggleTheme = () => {
+      const current = localStorage.getItem('et_theme') || 'light';
+      applyTheme(current === 'dark' ? 'light' : 'dark');
+    };
+    applyTheme(localStorage.getItem('et_theme') || 'light');
+
+    // --- Cards ---
+    function getCards() {
+      const stored = localStorage.getItem('et_cards');
+      if (stored && stored.trim()) return stored.split(',').map(c => c.trim()).filter(Boolean);
+      return ['Citi', 'Discover', 'GreenState', 'Costco'];
+    }
+    function renderCards() {
+      const cards = getCards();
+      const chipRow = document.getElementById('cardChips');
+      chipRow.innerHTML = '';
+      cards.forEach(card => {
+        const chip = document.createElement('div');
+        chip.className = 'example-chip';
+        chip.textContent = card;
+        chip.onclick = () => fill(card);
+        chipRow.appendChild(chip);
+      });
+      const select = document.getElementById('cardFilter');
+      select.innerHTML = '';
+      cards.forEach(card => {
+        const opt = document.createElement('option');
+        opt.value = card;
+        opt.textContent = card;
+        select.appendChild(opt);
+      });
+      const otherOpt = document.createElement('option');
+      otherOpt.value = 'Other';
+      otherOpt.textContent = 'Other';
+      select.appendChild(otherOpt);
+    }
+
+    // --- Offline Queue ---
+    function getQueue() { try { return JSON.parse(localStorage.getItem('et_offline_queue') || '[]'); } catch { return []; } }
+    function saveQueue(q) { localStorage.setItem('et_offline_queue', JSON.stringify(q)); updateQueueUI(); }
+    function pushToQueue(type, params) {
+      const q = getQueue();
+      q.push({ type, params, ts: Date.now() });
+      saveQueue(q);
+      showToast("Saved offline — will sync later", "info");
+    }
+    function updateQueueUI() {
+      const q = getQueue();
+      const badge = document.getElementById('queueBadge');
+      const banner = document.getElementById('queueBanner');
+      if (q.length > 0) {
+        badge.textContent = q.length;
+        badge.style.display = 'block';
+        banner.textContent = q.length + ' pending action' + (q.length > 1 ? 's' : '') + ' queued offline';
+        banner.style.display = 'block';
+      } else {
+        badge.style.display = 'none';
+        banner.style.display = 'none';
+      }
+    }
+    async function flushQueue() {
+      const q = getQueue();
+      if (q.length === 0) return;
+      const remaining = [];
+      for (const item of q) {
+        try {
+          let url;
+          if (item.type === 'add') {
+            const params = new URLSearchParams({ action: 'add', command: item.params.command });
+            url = getScriptUrl() + '?' + params;
+          } else if (item.type === 'deleteLast') {
+            url = getScriptUrl() + '?action=deleteLast';
+          } else if (item.type === 'deleteSpecific') {
+            url = getScriptUrl() + '?action=deleteSpecific&index=' + item.params.index;
+          }
+          const resp = await fetch(url, { redirect: 'follow' });
+          const data = await resp.json();
+          if (data.error) remaining.push(item);
+        } catch { remaining.push(item); }
+      }
+      saveQueue(remaining);
+      if (remaining.length === 0 && q.length > 0) showToast("Offline queue synced!", "success");
+    }
+
+    // --- Config ---
+    function getScriptUrl() { return localStorage.getItem('et_script_url') || ''; }
+
+    const elements = {
+      manualInput: document.getElementById("manualInput"),
+      submitBtn: document.getElementById("submitBtn"),
+      historyList: document.getElementById("historyList"),
+      fileIn: document.getElementById("fileIn"),
+      keyInput: document.getElementById("keyInput"),
+      urlInput: document.getElementById("urlInput"),
+      cardsInput: document.getElementById("cardsInput")
     };
 
-    function saveName() {
-        var name = document.getElementById('parent-name').value.trim();
-        if (name && name.length <= 50) { localStorage.setItem('sl_parentName', name); showMain(name); }
+    elements.keyInput.value = localStorage.getItem('et_gemini_key') || '';
+    elements.urlInput.value = localStorage.getItem('et_script_url') || '';
+    elements.cardsInput.value = localStorage.getItem('et_cards') || 'Citi,Discover,GreenState,Costco';
+
+    if (!getScriptUrl()) document.getElementById('configPanel').removeAttribute('hidden');
+
+    renderCards();
+    updateQueueUI();
+    flushQueue();
+
+    function showToast(msg, type) {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.className = 'toast t-' + type;
+      requestAnimationFrame(() => { toast.classList.add('visible'); });
+      setTimeout(() => { toast.classList.remove('visible'); }, 3500);
     }
 
-    function showMain(name) {
-        document.getElementById('setup-screen').style.display = 'none';
-        document.getElementById('main-screen').style.display = 'block';
-        document.getElementById('greeting').textContent = "Hi, " + name + "!";
-        updateQueueUI();
-        flushQueue();
-        fetchList();
+    window.saveConfig = () => {
+      localStorage.setItem('et_script_url', elements.urlInput.value.trim());
+      localStorage.setItem('et_gemini_key', elements.keyInput.value.trim());
+      localStorage.setItem('et_cards', elements.cardsInput.value.trim());
+      renderCards();
+      showToast("Settings Saved", "success");
+      setTimeout(() => document.getElementById('configPanel').setAttribute('hidden', ''), 1000);
+    };
+
+    window.switchTab = (tab) => {
+      document.querySelectorAll('.tab-btn').forEach((btn, i) => {
+        btn.classList.toggle('active', (i === 0 && tab === 'log') || (i === 1 && tab === 'reconcile'));
+      });
+      document.getElementById('tab-log').classList.toggle('active', tab === 'log');
+      document.getElementById('tab-reconcile').classList.toggle('active', tab === 'reconcile');
+    };
+
+    async function fetchWithRetry(url, opts = {}) {
+      try { return await fetch(url, opts); }
+      catch (e) { await new Promise(r => setTimeout(r, 2000)); return await fetch(url, opts); }
     }
 
-    function clearName() { localStorage.removeItem('sl_parentName'); location.reload(); }
-    function toTitleCase(str) { return str.toLowerCase().split(' ').map(function(word) { return word.charAt(0).toUpperCase() + word.slice(1); }).join(' '); }
+    window.fill = (val) => {
+      elements.manualInput.value += (elements.manualInput.value ? " " : "") + val;
+      elements.manualInput.focus();
+    };
 
-    function refreshList() {
-        var btn = document.getElementById('refreshBtn');
-        btn.classList.add('spinning');
-        flushQueue();
-        fetchList().then(function() { setTimeout(function() { btn.classList.remove('spinning'); }, 600); });
-    }
-
-    async function sendData() {
-        var input = document.getElementById('entry');
-        var val = input.value.trim();
-        if (!val || val.length > 200) return;
-        var name = localStorage.getItem('sl_parentName');
-        var text = toTitleCase(name) + " " + toTitleCase(val);
-        showToast("Saving...", "info");
+    elements.fileIn.onchange = async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const apiKey = localStorage.getItem('et_gemini_key');
+      if (!apiKey) {
+        showToast("Configure your Gemini API Key first!", "error");
+        document.getElementById('configPanel').removeAttribute('hidden');
+        return;
+      }
+      showToast("Scanning receipt...", "info");
+      const reader = new FileReader();
+      reader.onloadend = async () => {
         try {
-            var params = new URLSearchParams({ action: "add", text: text });
-            var response = await fetchWithRetry(getScriptUrl() + "?" + params);
-            var data = await response.json();
-            if (data.error) { showToast("Error: " + data.error, "error"); }
-            else { showToast("Added!", "success"); input.value = ""; fetchList(); }
-        } catch (e) { pushToQueue("add", { action: "add", text: text }); }
-    }
-
-    async function fetchList() {
-        try {
-            var response = await fetchWithRetry(getScriptUrl());
-            var data = await response.json();
-            if (data.error) { showToast("Error: " + data.error, "error"); return; }
-            currentData = data;
-            updateBadges();
-            var activeBtn = document.querySelector('.filter-btn.active');
-            var filterVal = activeBtn.getAttribute('data-filter');
-            renderList(filterVal);
-        } catch (e) { showToast("Connection error", "error"); }
-    }
-
-    function setFilter(btn, val) {
-        document.querySelectorAll('.filter-btn').forEach(function(b) { b.classList.remove('active'); });
-        btn.classList.add('active');
-        renderList(val);
-    }
-
-    function renderList(filter) {
-        var listElement = document.getElementById('needs-list');
-        listElement.textContent = "";
-        var filtered = currentData;
-        if (filter === 'none') filtered = currentData.filter(function(e) { return !e.store; });
-        else if (filter !== 'all') filtered = currentData.filter(function(e) { return e.store === filter; });
-
-        filtered.forEach(function(entry) {
-            var li = document.createElement('li');
-            li.className = "list-item";
-            var info = document.createElement('div');
-            info.className = 'item-info';
-            var strong = document.createElement('strong');
-            strong.textContent = entry.name;
-            info.appendChild(strong);
-            info.appendChild(document.createTextNode(": " + entry.item));
-            var small = document.createElement('small');
-            small.style.cssText = "color:var(--muted); display:block; font-size:0.75rem; margin-top:2px;";
-            small.textContent = entry.date;
-            info.appendChild(small);
-            var controls = document.createElement('div');
-            controls.className = 'item-controls';
-            var select = document.createElement('select');
-            select.onchange = function() { updateStore(entry.id, this.value); };
-            var defaultOpt = document.createElement('option');
-            defaultOpt.value = "";
-            defaultOpt.textContent = "Store";
-            select.appendChild(defaultOpt);
-            STORES.forEach(function(s) {
-                var opt = document.createElement('option');
-                opt.value = s;
-                opt.textContent = s;
-                if (entry.store === s) opt.selected = true;
-                select.appendChild(opt);
-            });
-            var checkBtn = document.createElement('button');
-            checkBtn.className = 'btn-check';
-            checkBtn.textContent = "✓";
-            checkBtn.onclick = function() { markBought(entry.id, entry.name, entry.item); };
-            controls.appendChild(select);
-            controls.appendChild(checkBtn);
-            li.appendChild(info);
-            li.appendChild(controls);
-            listElement.appendChild(li);
-        });
-    }
-
-    async function updateStore(id, val) {
-        try {
-            var params = new URLSearchParams({ action: "update", index: id, value: val });
-            var response = await fetchWithRetry(getScriptUrl() + "?" + params);
-            var data = await response.json();
-            if (data.error) { showToast("Error: " + data.error, "error"); }
-            else { fetchList(); }
-        } catch (e) { pushToQueue("update", { action: "update", index: id, value: val }); }
-    }
-
-    async function markBought(id, name, item) {
-        if (!confirm('Remove "' + item + '"?')) return;
-        try {
-            var params = new URLSearchParams({ action: "delete", index: id, name: name, item: item });
-            var response = await fetchWithRetry(getScriptUrl() + "?" + params);
-            var data = await response.json();
-            if (data.error) { showToast("Error: " + data.error, "error"); }
-            else { showToast("Got it!", "success"); fetchList(); }
-        } catch (e) { pushToQueue("delete", { action: "delete", index: id, name: name, item: item }); }
-    }
-
-    async function emailCurrentList() {
-        var activeBtn = document.querySelector('.filter-btn.active');
-        var filterName = activeBtn.textContent.trim();
-        showToast("Sending list...", "info");
-        var filtered = currentData;
-        if (filterName === 'No Store') filtered = currentData.filter(function(e) { return !e.store; });
-        else if (filterName !== 'All') filtered = currentData.filter(function(e) { return e.store === filterName; });
-        if (filtered.length === 0) { showToast("Nothing to send for this view", "error"); return; }
-        var itemsString = filtered.map(function(e) { return e.name + ": " + e.item; }).join("\n");
-        try {
-            var response = await fetchWithRetry(getScriptUrl(), {
-                method: 'POST', redirect: 'follow',
-                headers: { 'Content-Type': 'text/plain' },
-                body: JSON.stringify({ action: "email_demand", store: filterName, items: itemsString })
-            });
-            var data = await response.json();
-            if (data.error) { showToast("Error: " + data.error, "error"); }
-            else { showToast("List sent to configured email!", "success"); }
-        } catch (e) { showToast("Connection error", "error"); }
-    }
-</script>
-<script>
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js');
-    navigator.serviceWorker.ready.then(function(reg) {
-        reg.active.postMessage('getVersion');
-    });
-    navigator.serviceWorker.addEventListener('message', function(event) {
-        if (event.data.type === 'version') {
-            document.getElementById('app-version').textContent = 'V' + event.data.version;
+          const genAI = new GoogleGenerativeAI(apiKey);
+          const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+          const prompt = "Analyze this receipt image. Extract the store name, the absolute final grand total parameter, and the transaction date. Output ONLY a clean single-line conversational string formatted strictly like this template: [StoreName] $[Amount] [Month Day] (Example output string: 'Target $42.50 May 12th'). Do not attempt to guess or extract the payment method or credit card name. Do not include markdown code blocks or formatting.";
+          const result = await model.generateContent([prompt, { inlineData: { data: reader.result.split(',')[1], mimeType: "image/jpeg" } }]);
+          const parsedCommand = result.response.text().trim().replace(/`/g, "");
+          if (parsedCommand) {
+            elements.manualInput.value = parsedCommand;
+            elements.manualInput.classList.add('scan-pulse');
+            setTimeout(() => elements.manualInput.classList.remove('scan-pulse'), 1000);
+            showToast("Scan loaded! Add card, then send.", "success");
+          } else {
+            showToast("Couldn't parse receipt clearly.", "error");
+          }
+        } catch (err) {
+          showToast("Scan error: " + err.message, "error");
         }
-    });
-}
-</script>
-<div id="app-version" style="text-align:center; margin-top:1rem; font-size:0.65rem; color:var(--muted); font-weight:600;">V3.1.0</div>
+      };
+      reader.readAsDataURL(file);
+    };
+
+    async function submitExpense(command) {
+      if (!command) return;
+      showToast("Sending to Sheet...", "info");
+      try {
+        const params = new URLSearchParams({ action: "add", command: command });
+        const response = await fetchWithRetry(getScriptUrl() + "?" + params);
+        const data = await response.json();
+        if (data.error) {
+          showToast("Error: " + data.error, "error");
+        } else {
+          showToast(data.parsed.store + " $" + data.parsed.price + " (" + data.parsed.card + ")", "success");
+          elements.manualInput.value = "";
+        }
+      } catch (err) {
+        pushToQueue('add', { command });
+      }
+    }
+
+    elements.manualInput.addEventListener("keypress", (e) => { if (e.key === "Enter") elements.submitBtn.click(); });
+    elements.submitBtn.onclick = () => { submitExpense(elements.manualInput.value.trim()); };
+
+    window.deleteLast = async () => {
+      if (confirm("Delete the most recent entry?")) {
+        showToast("Deleting...", "info");
+        try {
+          const response = await fetchWithRetry(getScriptUrl() + "?action=deleteLast");
+          const data = await response.json();
+          if (data.error) {
+            showToast("Error: " + data.error, "error");
+          } else {
+            showToast("Entry deleted", "success");
+            if (elements.historyList.children.length > 0) window.fetchHistory();
+          }
+        } catch (err) {
+          pushToQueue('deleteLast', {});
+        }
+      }
+    };
+
+    window.fetchHistory = async () => {
+      const card = document.getElementById('cardFilter').value;
+      elements.historyList.textContent = "";
+      const loading = document.createElement('p');
+      loading.style.cssText = "padding:10px; font-size:0.9rem; color:" + "var(--muted)" + ";";
+      loading.textContent = "Searching...";
+      elements.historyList.appendChild(loading);
+
+      try {
+        const res = await fetchWithRetry(getScriptUrl() + "?card=" + encodeURIComponent(card));
+        const data = await res.json();
+        elements.historyList.textContent = "";
+
+        if (data.error) {
+          const errP = document.createElement('p');
+          errP.style.cssText = "padding:10px; color:#c5221f;";
+          errP.textContent = data.error;
+          elements.historyList.appendChild(errP);
+          return;
+        }
+
+        if (data.entries && data.entries.length > 0) {
+          data.entries.forEach(entry => {
+            const div = document.createElement('div');
+            div.className = 'history-item';
+            const details = document.createElement('div');
+            details.className = 'history-details';
+            const storeName = document.createElement('span');
+            storeName.style.cssText = "font-weight:700; font-size:0.95rem;";
+            storeName.textContent = entry.where;
+            const dateSpan = document.createElement('span');
+            dateSpan.style.cssText = "font-size:0.75rem; color:var(--muted);";
+            dateSpan.textContent = entry.when;
+            details.appendChild(storeName);
+            details.appendChild(dateSpan);
+            const controls = document.createElement('div');
+            controls.style.cssText = "display:flex; align-items:center; gap:12px;";
+            const price = document.createElement('span');
+            price.className = 'history-price';
+            price.textContent = "$" + parseFloat(entry.price).toFixed(2);
+            const btn = document.createElement('button');
+            btn.style.cssText = "background:var(--chip-bg); color:var(--accent); border:1px solid var(--chip-border); width:34px; height:34px; border-radius:50%; cursor:pointer; font-size:1rem; transition: transform 0.15s ease;";
+            btn.textContent = "✓";
+            btn.onclick = () => reconcileItem(entry.index);
+            controls.appendChild(price);
+            controls.appendChild(btn);
+            div.appendChild(details);
+            div.appendChild(controls);
+            elements.historyList.appendChild(div);
+          });
+        } else {
+          const empty = document.createElement('p');
+          empty.style.cssText = "padding:10px; color:var(--muted);";
+          empty.textContent = "No items found.";
+          elements.historyList.appendChild(empty);
+        }
+      } catch (e) {
+        elements.historyList.textContent = "";
+        const errP = document.createElement('p');
+        errP.style.cssText = "padding:10px; color:#c5221f;";
+        errP.textContent = "Fetch failed.";
+        elements.historyList.appendChild(errP);
+      }
+    };
+
+    async function reconcileItem(index) {
+      if (confirm("Remove this item?")) {
+        try {
+          const response = await fetchWithRetry(getScriptUrl() + "?action=deleteSpecific&index=" + index);
+          const data = await response.json();
+          if (data.error) {
+            showToast("Error: " + data.error, "error");
+          } else {
+            window.fetchHistory();
+          }
+        } catch (err) {
+          pushToQueue('deleteSpecific', { index });
+        }
+      }
+    }
+  </script>
 </body>
 </html>

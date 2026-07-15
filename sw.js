@@ -1,6 +1,6 @@
-const APP_VERSION = '3.1.0';
-const CACHE_NAME = 'shopping-list-v' + APP_VERSION;
-const SHELL_FILES = ['index.html', 'kids.html', 'manifest.json', 'kids.json'];
+const APP_VERSION = '4.1.0';
+const CACHE_NAME = 'expense-tracker-v' + APP_VERSION;
+const SHELL_FILES = ['index.html', 'manifest.json'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(

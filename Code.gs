@@ -1,16 +1,11 @@
-/**
- * Shopping List - Backend
- * All operations via doGet for proper CORS handling.
- */
-
 const SPREADSHEET_ID = PropertiesService.getScriptProperties().getProperty('SPREADSHEET_ID');
-const RECIPIENT_EMAIL = PropertiesService.getScriptProperties().getProperty("RECIPIENT_EMAIL") || "jsknight007@gmail.com";
 const TIMEZONE = Session.getScriptTimeZone();
-const STORES = ["Hy-Vee", "Fareway", "Target", "Wal-Mart", "Costco"];
+const COL = { ENTRY_TIME: 0, TRANSACTION_DATE: 1, STORE: 2, PRICE: 3, CARD: 4, RAW: 5 };
+const MAX_PRICE = 50000;
 
 function getSheet() {
   if (!SPREADSHEET_ID) throw new Error("SPREADSHEET_ID not set in Script Properties");
-  return SpreadsheetApp.openById(SPREADSHEET_ID).getActiveSheet();
+  return SpreadsheetApp.openById(SPREADSHEET_ID).getSheets()[0];
 }
 
 function doGet(e) {
@@ -20,10 +15,9 @@ function doGet(e) {
 
     switch (action) {
       case "add": return handleAdd(params);
-      case "update": return handleUpdate(params);
-      case "delete": return handleDelete(params);
-      case "email_demand": return handleEmail(params);
-      default: return handleFetch();
+      case "deleteLast": return handleDeleteLast();
+      case "deleteSpecific": return handleDeleteSpecific(params);
+      default: return handleFetch(params);
     }
   } catch (err) {
     return jsonResponse({ error: err.message });
@@ -31,170 +25,165 @@ function doGet(e) {
 }
 
 function handleAdd(params) {
-  var text = params.text;
-  if (!text || text.trim() === "") {
-    return jsonResponse({ error: "Item text is required" });
+  const command = params.command;
+  if (!command || command.trim() === "") {
+    return jsonResponse({ error: "Command cannot be empty" });
   }
-  text = text.trim();
-  if (text.length > 200) {
-    return jsonResponse({ error: "Item too long (max 200 chars)" });
+  if (command.length > 500) {
+    return jsonResponse({ error: "Command too long" });
   }
 
-  var parts = text.split(" ");
-  var name = parts[0];
-  var item = parts.slice(1).join(" ");
-  if (!item) { item = name; name = "General"; }
+  const result = parseCommand(command);
+  if (!result.success) {
+    return jsonResponse({ error: "Could not parse a price from command" });
+  }
 
-  var sheet = getSheet();
-  sheet.appendRow([new Date(), name, item, ""]);
-  return jsonResponse({ status: "success", name: name, item: item });
+  const sheet = getSheet();
+  sheet.appendRow([
+    new Date(),
+    result.date,
+    result.store,
+    result.price,
+    result.card,
+    command
+  ]);
+
+  return jsonResponse({ status: "success", parsed: { store: result.store, price: result.price, card: result.card } });
 }
 
-function handleUpdate(params) {
-  var index = parseInt(params.index);
-  var value = params.value || "";
-
-  var sheet = getSheet();
-  var lastRow = sheet.getLastRow();
-
-  if (isNaN(index) || index < 2 || index > lastRow) {
-    return jsonResponse({ error: "Invalid row index" });
+function handleDeleteLast() {
+  const sheet = getSheet();
+  const lastRow = sheet.getLastRow();
+  if (lastRow <= 1) {
+    return jsonResponse({ error: "No entries to delete" });
   }
-  if (value && STORES.indexOf(value) === -1) {
-    return jsonResponse({ error: "Invalid store value" });
-  }
-
-  sheet.getRange(index, 4).setValue(value);
+  sheet.deleteRow(lastRow);
   return jsonResponse({ status: "success" });
 }
 
-function handleDelete(params) {
-  var index = parseInt(params.index);
-  var sheet = getSheet();
-  var lastRow = sheet.getLastRow();
+function handleDeleteSpecific(params) {
+  const index = parseInt(params.index);
+  const sheet = getSheet();
+  const lastRow = sheet.getLastRow();
 
   if (isNaN(index) || index < 2 || index > lastRow) {
     return jsonResponse({ error: "Invalid row index" });
   }
-
-  if (params.name && params.item) {
-    var row = sheet.getRange(index, 1, 1, 4).getValues()[0];
-    var rowName = (row[1] || "").toString().toLowerCase().trim();
-    var rowItem = (row[2] || "").toString().toLowerCase().trim();
-    if (rowName !== params.name.toLowerCase().trim() || rowItem !== params.item.toLowerCase().trim()) {
-      return jsonResponse({ error: "Row content mismatch - list may have changed" });
-    }
-  }
-
   sheet.deleteRow(index);
   return jsonResponse({ status: "success" });
 }
 
-function doPost(e) {
-  try {
-    if (!e || !e.postData || !e.postData.contents) {
-      return jsonResponse({ error: "Invalid request" });
-    }
-    var data = JSON.parse(e.postData.contents);
-    if (data.action === "email_demand") {
-      return handleEmail(data);
-    }
-    return jsonResponse({ error: "Unknown POST action" });
-  } catch (err) {
-    return jsonResponse({ error: err.message });
+function handleFetch(params) {
+  const cardFilter = params.card;
+  if (!cardFilter) {
+    return jsonResponse({ entries: [] });
   }
+
+  const sheet = getSheet();
+  const lastRow = sheet.getLastRow();
+  if (lastRow <= 1) {
+    return jsonResponse({ entries: [] });
+  }
+
+  const startRow = Math.max(2, lastRow - 99);
+  const numRows = lastRow - startRow + 1;
+  const data = sheet.getRange(startRow, 1, numRows, 6).getValues();
+  const entries = [];
+  const filterLower = cardFilter.trim().toLowerCase();
+
+  for (let i = 0; i < data.length; i++) {
+    const rowCard = data[i][COL.CARD] ? data[i][COL.CARD].toString().trim().toLowerCase() : "";
+    if (rowCard === filterLower) {
+      entries.push({
+        index: startRow + i,
+        when: Utilities.formatDate(new Date(data[i][COL.TRANSACTION_DATE]), TIMEZONE, "MM/dd/yy"),
+        where: data[i][COL.STORE],
+        price: data[i][COL.PRICE]
+      });
+    }
+  }
+
+  return jsonResponse({ entries: entries.reverse().slice(0, 10) });
 }
 
-function handleEmail(params) {
-  var store = params.store || "All";
-  var items = params.items || "";
-  if (!items) {
-    return jsonResponse({ error: "No items to email" });
+function parseCommand(command) {
+  const result = {
+    price: 0.00,
+    store: "Unknown Store",
+    date: new Date(),
+    card: "Other",
+    success: false
+  };
+
+  if (!command) return result;
+  const lower = command.toLowerCase().trim();
+
+  const dollarMatch = command.match(/\$\s?(\d+(\.\d{1,2})?)/);
+  const plainMatches = [...command.matchAll(/(?<!\$)\b(\d+(\.\d{1,2})?)\b/g)];
+  const priceMatch = dollarMatch || (plainMatches.length > 0 ? plainMatches[plainMatches.length - 1] : null);
+
+  if (priceMatch) {
+    const price = parseFloat(priceMatch[1]);
+    if (price <= 0 || price > MAX_PRICE) return result;
+    result.price = price;
+    result.success = true;
+    let storePart = command.substring(0, priceMatch.index).trim();
+    result.store = storePart.replace(/^(at|to|from|for)\s+/i, "");
   }
-  if (items.length > 5000) {
-    return jsonResponse({ error: "Item list too long" });
-  }
 
-  var body = "Items for " + store + ":\n\n" + items;
-  MailApp.sendEmail(RECIPIENT_EMAIL, "Shopping List: " + store, body);
-  return jsonResponse({ status: "success" });
-}
+  const dateRegex = /(january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\s+(\d{1,2})(st|nd|rd|th)?/i;
+  const dateFound = command.match(dateRegex);
 
-function handleFetch() {
-  var sheet = getSheet();
-  var fullData = sheet.getDataRange().getValues();
-
-  if (fullData.length <= 1) {
-    return jsonResponse([]);
-  }
-
-  var rows = fullData.slice(1);
-  var list = rows.map(function(row, index) {
-    var dateVal = row[0];
-    var formattedDate = "N/A";
-
-    try {
-      if (dateVal instanceof Date) {
-        formattedDate = Utilities.formatDate(dateVal, TIMEZONE, "MM/dd");
-      } else if (dateVal && dateVal !== "") {
-        var convertedDate = new Date(dateVal);
-        if (!isNaN(convertedDate.getTime())) {
-          formattedDate = Utilities.formatDate(convertedDate, TIMEZONE, "MM/dd");
-        }
-      }
-    } catch (e) {
-      formattedDate = "Err";
-    }
-
-    return {
-      id: index + 2,
-      date: formattedDate,
-      name: row[1] || "",
-      item: row[2] || "",
-      store: row[3] || ""
+  if (dateFound) {
+    const monthStr = dateFound[1].toLowerCase();
+    const day = parseInt(dateFound[2]);
+    const year = new Date().getFullYear();
+    const monthMap = {
+      jan:0, january:0, feb:1, february:1, mar:2, march:2, apr:3, april:3,
+      may:4, jun:5, june:5, jul:6, july:6, aug:7, august:7, sep:8, september:8,
+      oct:9, october:9, nov:10, november:10, dec:11, december:11
     };
-  });
-
-  return jsonResponse(list);
-}
-
-/**
- * Trigger-based: Groups by store and emails summary.
- * Set up in Triggers (Clock icon).
- */
-function sendDailySummary() {
-  var sheet = getSheet();
-  var data = sheet.getDataRange().getValues();
-  if (data.length <= 1) return;
-
-  var rows = data.slice(1);
-  var stores = {};
-
-  rows.forEach(function(row) {
-    var store = row[3] || "Unassigned/New";
-    if (!stores[store]) stores[store] = [];
-    stores[store].push(row[1] + ": " + row[2]);
-  });
-
-  var emailBody = "<div style='font-family:sans-serif;'><h2>Today's Needs List</h2>";
-  for (var store in stores) {
-    emailBody += "<h3 style='color:#2b7de9;'>" + store + "</h3><ul>";
-    stores[store].forEach(function(item) {
-      emailBody += "<li style='margin-bottom:5px;'>" + escapeHtml(item) + "</li>";
-    });
-    emailBody += "</ul>";
+    const localDate = new Date(year, monthMap[monthStr], day, 12, 0, 0, 0);
+    result.date = localDate;
+  } else if (lower.includes("yesterday")) {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    yesterday.setHours(12, 0, 0, 0);
+    result.date = yesterday;
   }
-  emailBody += "</div>";
 
-  MailApp.sendEmail({
-    to: RECIPIENT_EMAIL,
-    subject: "Grocery & Needs Summary",
-    htmlBody: emailBody
-  });
-}
+  const storeMap = {
+    "panera": "Panera Bread", "target": "Target", "costco": "Costco",
+    "hyvee": "Hy-Vee", "hy-vee": "Hy-Vee", "amazon": "Amazon",
+    "walmart": "Walmart", "granite city": "Granite City"
+  };
 
-function escapeHtml(text) {
-  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  let rawStore = result.store.toLowerCase().trim();
+  let lookupKey = rawStore.replace(/[\s-]/g, "");
+
+  if (storeMap[rawStore]) {
+    result.store = storeMap[rawStore];
+  } else if (storeMap[lookupKey]) {
+    result.store = storeMap[lookupKey];
+  } else if (result.store) {
+    result.store = result.store.replace(/(^\w|\s\w|-\w)/g, l => l.toUpperCase());
+  }
+
+  const cardMap = {
+    "city": "Citi", "citi": "Citi", "greenstate": "GreenState",
+    "green state": "GreenState", "discover": "Discover",
+    "costco": "Costco", "verizon": "Verizon"
+  };
+
+  for (let key in cardMap) {
+    const wordBoundary = new RegExp("\\b" + key + "\\b");
+    if (wordBoundary.test(lower)) {
+      result.card = cardMap[key];
+      break;
+    }
+  }
+
+  return result;
 }
 
 function jsonResponse(data) {
