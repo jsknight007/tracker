@@ -327,7 +327,7 @@
       reader.onloadend = async () => {
         try {
           const genAI = new GoogleGenerativeAI(apiKey);
-          const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+          const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash" });
           const prompt = "Analyze this receipt image. Extract the store name, the absolute final grand total parameter, and the transaction date. Output ONLY a clean single-line conversational string formatted strictly like this template: [StoreName] $[Amount] [Month Day] (Example output string: 'Target $42.50 May 12th'). Do not attempt to guess or extract the payment method or credit card name. Do not include markdown code blocks or formatting.";
           const result = await model.generateContent([prompt, { inlineData: { data: reader.result.split(',')[1], mimeType: "image/jpeg" } }]);
           const parsedCommand = result.response.text().trim().replace(/`/g, "");
