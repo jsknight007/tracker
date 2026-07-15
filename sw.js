@@ -1,4 +1,4 @@
-const APP_VERSION = '4.1.0';
+const APP_VERSION = '4.2.0';
 const CACHE_NAME = 'expense-tracker-v' + APP_VERSION;
 const SHELL_FILES = ['index.html', 'manifest.json'];
 
