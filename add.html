@@ -50,7 +50,7 @@
   <button class="undo-link" style="margin:0 auto 1rem auto; display:block; opacity:0.5; font-size:0.7rem;" onclick="document.getElementById('cfgPanel').toggleAttribute('hidden')">Settings</button>
   <div id="cfgPanel" hidden style="margin-bottom:1rem;">
     <input type="text" id="urlCfg" placeholder="Apps Script URL" style="padding:10px; border:1px solid #ddd; border-radius:10px; width:100%; margin-bottom:8px; font-size:0.85rem;">
-    <button class="chip" onclick="localStorage.setItem('script_url',document.getElementById('urlCfg').value.trim()); showToast('Saved','success'); document.getElementById('cfgPanel').setAttribute('hidden','');" style="width:100%; padding:10px;">Save URL</button>
+    <button class="chip" onclick="localStorage.setItem('et_script_url',document.getElementById('urlCfg').value.trim()); showToast('Saved','success'); document.getElementById('cfgPanel').setAttribute('hidden','');" style="width:100%; padding:10px;">Save URL</button>
   </div>
 
   <div class="input-group">
@@ -72,7 +72,7 @@
 <div id="toast" class="toast"></div>
 
 <script>
-  function getScriptUrl() { return localStorage.getItem('script_url') || ''; }
+  function getScriptUrl() { return localStorage.getItem('et_script_url') || ''; }
   const input = document.getElementById('cmd');
 
   const urlCfg = document.getElementById('urlCfg');

@@ -156,17 +156,17 @@
     function applyTheme(theme) {
       document.documentElement.setAttribute('data-theme', theme);
       document.getElementById('themeToggle').textContent = theme === 'dark' ? '☀️' : '🌙';
-      localStorage.setItem('theme', theme);
+      localStorage.setItem('et_theme', theme);
     }
     window.toggleTheme = () => {
-      const current = localStorage.getItem('theme') || 'light';
+      const current = localStorage.getItem('et_theme') || 'light';
       applyTheme(current === 'dark' ? 'light' : 'dark');
     };
-    applyTheme(localStorage.getItem('theme') || 'light');
+    applyTheme(localStorage.getItem('et_theme') || 'light');
 
     // --- Cards ---
     function getCards() {
-      const stored = localStorage.getItem('cards');
+      const stored = localStorage.getItem('et_cards');
       if (stored && stored.trim()) return stored.split(',').map(c => c.trim()).filter(Boolean);
       return ['Citi', 'Discover', 'GreenState', 'Costco'];
     }
@@ -196,8 +196,8 @@
     }
 
     // --- Offline Queue ---
-    function getQueue() { try { return JSON.parse(localStorage.getItem('offline_queue') || '[]'); } catch { return []; } }
-    function saveQueue(q) { localStorage.setItem('offline_queue', JSON.stringify(q)); updateQueueUI(); }
+    function getQueue() { try { return JSON.parse(localStorage.getItem('et_offline_queue') || '[]'); } catch { return []; } }
+    function saveQueue(q) { localStorage.setItem('et_offline_queue', JSON.stringify(q)); updateQueueUI(); }
     function pushToQueue(type, params) {
       const q = getQueue();
       q.push({ type, params, ts: Date.now() });
@@ -243,7 +243,7 @@
     }
 
     // --- Config ---
-    function getScriptUrl() { return localStorage.getItem('script_url') || ''; }
+    function getScriptUrl() { return localStorage.getItem('et_script_url') || ''; }
 
     const elements = {
       manualInput: document.getElementById("manualInput"),
@@ -255,9 +255,9 @@
       cardsInput: document.getElementById("cardsInput")
     };
 
-    elements.keyInput.value = localStorage.getItem('gemini_key') || '';
-    elements.urlInput.value = localStorage.getItem('script_url') || '';
-    elements.cardsInput.value = localStorage.getItem('cards') || 'Citi,Discover,GreenState,Costco';
+    elements.keyInput.value = localStorage.getItem('et_gemini_key') || '';
+    elements.urlInput.value = localStorage.getItem('et_script_url') || '';
+    elements.cardsInput.value = localStorage.getItem('et_cards') || 'Citi,Discover,GreenState,Costco';
 
     if (!getScriptUrl()) document.getElementById('configPanel').removeAttribute('hidden');
 
@@ -274,9 +274,9 @@
     }
 
     window.saveConfig = () => {
-      localStorage.setItem('script_url', elements.urlInput.value.trim());
-      localStorage.setItem('gemini_key', elements.keyInput.value.trim());
-      localStorage.setItem('cards', elements.cardsInput.value.trim());
+      localStorage.setItem('et_script_url', elements.urlInput.value.trim());
+      localStorage.setItem('et_gemini_key', elements.keyInput.value.trim());
+      localStorage.setItem('et_cards', elements.cardsInput.value.trim());
       renderCards();
       showToast("Settings Saved", "success");
       setTimeout(() => document.getElementById('configPanel').setAttribute('hidden', ''), 1000);
@@ -303,7 +303,7 @@
     elements.fileIn.onchange = async (e) => {
       const file = e.target.files[0];
       if (!file) return;
-      const apiKey = localStorage.getItem('gemini_key');
+      const apiKey = localStorage.getItem('et_gemini_key');
       if (!apiKey) {
         showToast("Configure your Gemini API Key first!", "error");
         document.getElementById('configPanel').removeAttribute('hidden');
@@ -314,7 +314,7 @@
       reader.onloadend = async () => {
         try {
           const genAI = new GoogleGenerativeAI(apiKey);
-          const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash" });
+          const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
           const prompt = "Analyze this receipt image. Extract the store name, the absolute final grand total parameter, and the transaction date. Output ONLY a clean single-line conversational string formatted strictly like this template: [StoreName] $[Amount] [Month Day] (Example output string: 'Target $42.50 May 12th'). Do not attempt to guess or extract the payment method or credit card name. Do not include markdown code blocks or formatting.";
           const result = await model.generateContent([prompt, { inlineData: { data: reader.result.split(',')[1], mimeType: "image/jpeg" } }]);
           const parsedCommand = result.response.text().trim().replace(/`/g, "");
